@@ -9,14 +9,12 @@
 
 <style>
 
-/* ==================== GENERAL ===================== */
 
 body {
   scroll-behavior: smooth;
   background-color: #fff8f5;
 }
 
-/* ==================== NAVBAR ===================== */
 
 .navbar {
   background-color: #b22222 !important;
@@ -27,25 +25,21 @@ body {
   margin-right: 10px;
 }
 
-/* === Ícono de usuario === */
 .user-icon {
   padding: 6px;
   border-radius: 50%;
   transition: background-color 0.3s ease;
 }
 
-/* Sin underline hover */
 .user-icon::after {
   content: none !important;
 }
 
-/* Efecto al pasar el mouse */
 .user-icon:hover {
   background-color: rgba(255, 255, 255, 0.2);
 }
 
 
-/* efecto underline animado */
 .nav-link {
   position: relative;
   color: white !important;
@@ -67,7 +61,6 @@ body {
   width: 100%;
 }
 
-/* ==================== HERO ===================== */
 
 .hero {
   height: 100vh;
@@ -85,13 +78,11 @@ body {
   animation: fadeDown .6s ease-out;
 }
 
-/* Animación */
 @keyframes fadeDown {
   from { opacity: 0; transform: translateY(-40px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ==================== SECCIONES CON IMAGEN ===================== */
 
 .section-img-text {
   display: flex;
@@ -119,7 +110,6 @@ body {
   color: #b22222;
 }
 
-/* ==================== ANIMACIÓN SCROLL ===================== */
 
 .fade-in {
   opacity: 0;
@@ -132,7 +122,6 @@ body {
   transform: translateY(0);
 }
 
-/* ==================== VALORES ===================== */
 
 .card-values {
   transition: transform 0.3s ease;
@@ -144,7 +133,6 @@ body {
   background-color: #fff0f0;
 }
 
-/* ==================== FOOTER ===================== */
 
 footer {
   background-color: #b22222;
@@ -160,7 +148,6 @@ footer a {
 </head>
 <body>
 
-<!-- ✅ NAVBAR LIMPIO CON ICONO DE USUARIO -->
 <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
   <div class="container">
     <a class="navbar-brand fw-bold d-flex align-items-center" href="#inicio">
@@ -194,7 +181,6 @@ footer a {
 </nav>
 
 
-<!-- ✅ HERO -->
 <header id="inicio" class="hero">
   <div class="container fade-in">
     <h1>Bienvenidos a Dulcería Lilis</h1>
@@ -202,7 +188,6 @@ footer a {
   </div>
 </header>
 
-<!-- ✅ HISTORIA (imagen izquierda / texto derecha) -->
 <section id="historia" class="py-5">
   <div class="container fade-in section-img-text">
     <img src="{% static 'images/nosotros.jpg' %}" alt="Historia Lilis">
@@ -216,7 +201,6 @@ footer a {
   </div>
 </section>
 
-<!-- ✅ MISIÓN (texto izquierda / imagen derecha) -->
 <section id="mision" class="py-5" style="background-color:#ffeaea;">
   <div class="container fade-in section-img-text">
     <div>
@@ -232,7 +216,6 @@ footer a {
   </div>
 </section>
 
-<!-- ✅ VISIÓN (imagen izquierda / texto derecha) -->
 <section id="vision" class="py-5">
   <div class="container fade-in section-img-text">
     <img src="{% static 'images/vision.jpg' %}" alt="Visión">
@@ -246,7 +229,6 @@ footer a {
   </div>
 </section>
 
-<!-- ✅ VALORES -->
 <section id="valores" class="py-5 bg-white fade-in">
   <div class="container">
     <h2 class="section-title text-center">Nuestros Valores</h2>
@@ -259,7 +241,6 @@ footer a {
   </div>
 </section>
 
-<!-- ✅ CONTACTO -->
 <section id="contacto" class="py-5" style="background-color:#ffeaea;">
   <div class="container fade-in">
     <h2 class="section-title text-center">Contáctanos</h2>
@@ -276,7 +257,6 @@ footer a {
   </div>
 </section>
 
-<!-- ✅ FOOTER -->
 <footer class="py-4 text-center">
   <div class="container">
     <p class="mb-2">Síguenos en redes sociales</p>
@@ -288,7 +268,6 @@ footer a {
 </footer>
 
 <script>
-  /* Mostrar animaciones al hacer scroll */
   const observer = new IntersectionObserver(entries => {
     entries.forEach(entry => {
       if (entry.isIntersecting) entry.target.classList.add("visible");

@@ -72,57 +72,48 @@ class RegisterForm(forms.ModelForm):
 
 
 class UsuarioAdminForm(forms.ModelForm):
-    password1 = forms.CharField(
-        label="Contraseña",
-        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
-        min_length=8,
-        validators=[password_fuerte]
-    )
-
-    password2 = forms.CharField(
-        label="Confirmar contraseña",
-        widget=forms.PasswordInput(attrs={'class': 'form-control'})
-    )
 
     class Meta:
         model = Usuario
-        fields = ['username', 'first_name', 'last_name', 'email', 'rol', 'estado']
+        fields = ['username', 'first_name', 'last_name', 'email', 'telefono', 'rol', 'estado']
+
         widgets = {
             'username': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Opcional'}),
             'rol': forms.Select(attrs={'class': 'form-select'}),
             'estado': forms.Select(attrs={'class': 'form-select'}),
+            'ultimo_acceso': forms.TextInput(attrs={'class': 'form-control', 'readonly': True}),
+            'sesiones_activas': forms.TextInput(attrs={'class': 'form-control', 'readonly': True}),
         }
 
     def clean_username(self):
         username = self.cleaned_data.get('username').strip()
-        if Usuario.objects.filter(username=username).exists():
+        usuario_id = self.instance.id 
+
+        if Usuario.objects.filter(username=username).exclude(id=usuario_id).exists():
             raise ValidationError("Este nombre de usuario ya está registrado.")
+
         return username
 
     def clean_email(self):
         email = self.cleaned_data.get('email').strip().lower()
-        if Usuario.objects.filter(email=email).exists():
-            raise ValidationError("Este correo ya está en uso.")
-        return email
+        usuario_id = self.instance.id  
 
-    def clean(self):
-        cleaned = super().clean()
-        p1 = cleaned.get("password1")
-        p2 = cleaned.get("password2")
-        if p1 != p2:
-            raise ValidationError("Las contraseñas no coinciden.")
-        return cleaned
+        if Usuario.objects.filter(email=email).exclude(id=usuario_id).exists():
+            raise ValidationError("Este correo ya está en uso.")
+
+        return email
 
     def save(self, commit=True):
         usuario = super().save(commit=False)
-        usuario.set_password(self.cleaned_data['password1'])
-        if commit:
-            usuario.save()
-        return usuario
 
+        if commit:
+            usuario.save()  
+
+        return usuario
 
 
 

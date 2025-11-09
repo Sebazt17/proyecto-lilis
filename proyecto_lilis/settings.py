@@ -4,7 +4,6 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-#crear variable para la ruta de los templates
 TEMPLATES_DIR = os.path.join(BASE_DIR,'templates')
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -136,11 +135,12 @@ EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = "soporte.apparduino@gmail.com"
-EMAIL_HOST_PASSWORD = "glge sbkw dfst tudf"  # CONTRASEÑA DE APLICACIÓN
+EMAIL_HOST_PASSWORD = "glge sbkw dfst tudf"  
 DEFAULT_FROM_EMAIL = "Dulcería Lilis <soporte.apparduino@gmail.com>"
 
-# Tiempo máximo del enlace de recuperación (1 hora)
 PASSWORD_RESET_TIMEOUT = 3600
 
-# Plantilla HTML personalizada
 PASSWORD_RESET_EMAIL_TEMPLATE_NAME = "accounts_lilis/password_reset_email.html"
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

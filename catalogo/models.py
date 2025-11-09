@@ -14,7 +14,6 @@ class Categoria(models.Model):
 
 
 class Producto(models.Model):
-    # Identificación
     sku = models.CharField(max_length=30, unique=True, verbose_name='SKU')
     ean_upc = models.CharField(max_length=30, blank=True, null=True, unique=True, verbose_name='Código EAN/UPC')
     nombre = models.CharField(max_length=100, verbose_name='Nombre del Producto')
@@ -23,7 +22,6 @@ class Producto(models.Model):
     marca = models.CharField(max_length=50, blank=True, null=True)
     modelo = models.CharField(max_length=50, blank=True, null=True)
 
-    # Unidades y precios
     uom_compra = models.CharField(max_length=10, default='UN', verbose_name='Unidad de Compra')
     uom_venta = models.CharField(max_length=10, default='UN', verbose_name='Unidad de Venta')
     factor_conversion = models.DecimalField(max_digits=10, decimal_places=2, default=1)
@@ -32,7 +30,6 @@ class Producto(models.Model):
     precio_venta = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     impuesto_iva = models.PositiveIntegerField(default=19, verbose_name='IVA (%)')
 
-    # Stock y control
     stock_minimo = models.PositiveIntegerField(default=0)
     stock_maximo = models.PositiveIntegerField(blank=True, null=True)
     punto_reorden = models.PositiveIntegerField(blank=True, null=True)
@@ -40,8 +37,7 @@ class Producto(models.Model):
     control_por_lote = models.BooleanField(default=False)
     control_por_serie = models.BooleanField(default=False)
 
-    # Relaciones y soporte
-    imagen_url = models.CharField(max_length=200, blank=True, null=True)
+    imagen = models.ImageField(upload_to='productos/', blank=True, null=True, verbose_name='Imagen del Producto')
     ficha_tecnica_url = models.CharField(max_length=200, blank=True, null=True)
 
     def __str__(self):

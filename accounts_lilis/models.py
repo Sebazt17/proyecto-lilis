@@ -33,6 +33,8 @@ class Usuario(AbstractUser):
 
     area = models.CharField(max_length=30, choices=AREAS_USUARIO, blank=True, null=True, verbose_name='Área/Unidad')
     observaciones = models.TextField(blank=True, null=True, verbose_name='Observaciones')
+    
+    requiere_cambio_password = models.BooleanField(default=False, verbose_name="Requiere cambio de contraseña")
 
     REQUIRED_FIELDS = ['email']
 

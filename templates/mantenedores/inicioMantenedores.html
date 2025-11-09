@@ -1,38 +1,118 @@
 {% extends "mantenedores/paginaBase.html" %}
 {% load static %}
 
+{% block page_title %}Mantenedores del Sistema{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+{% endblock %}
+
 {% block titulo %}
-<h1 class="text-center p-3">Mantenedores del sistema</h1>
+<h2 class="fw-bold text-center titulo-mantenedores">Mantenedores del sistema</h2>
+<p class="text-center text-secondary subtitulo-mantenedores">
+    Elige un módulo para administrar los datos de la aplicación.
+</p>
 {% endblock titulo %}
+
 
 {% block contenido %}
 
+<style>
+
+    body {
+        background: linear-gradient(180deg, #FDEEEE, #fff);
+    }
+
+    .titulo-mantenedores {
+        margin-top: 90px !important;  
+        margin-bottom: 10px;
+    }
+
+    .subtitulo-mantenedores {
+        margin-bottom: 50px !important;
+    }
+
+    .card-menu {
+        border-radius: 22px;
+        padding: 45px 25px;
+        text-align: center;
+        height: 280px; 
+        backdrop-filter: blur(7px);
+        background: rgba(255, 255, 255, 0.45);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .card-menu:hover {
+        transform: translateY(-12px) scale(1.04);
+        box-shadow: 0px 18px 50px rgba(0, 0, 0, .28);
+        background: rgba(255, 255, 255, 0.65);
+    }
+
+    .icono-menu {
+        font-size: 70px;
+        color: #B22222;
+        margin-bottom: 12px;
+    }
+
+    .card-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-top: 10px;
+    }
+
+    .info-number {
+        font-size: 1.2rem;
+        color: #B22222;
+        font-weight: bold;
+    }
+
+</style>
+
+
 <div class="container my-5">
-    <div class="card shadow card-values mx-auto" style="max-width: 800px;">
-        <div class="card-body text-center py-5">
+    <div class="row row-cols-1 row-cols-md-3 g-4 justify-content-center">
 
-            <p class="text-secondary mb-5">Elige una acción para administrar los datos del sistema.</p>
+        {% if request.user.rol in "ADMIN OPER_INVENTARIO OPER_PRODUCCION" %}
 
-            <div class="d-flex flex-column gap-4 align-items-center">
-
-                {% if request.user.rol in "ADMIN OPER_INVENTARIO OPER_PRODUCCION" %}
-
-                <a href="{% url 'mostrar_todos_productos' %}" class="btn btn-danger btn-lg w-75 py-3">
-                    <i class="bi bi-bag-plus"></i> Productos
-                </a>
-
-                <a href="{% url 'proveedores:listar' %}" class="btn btn-danger btn-lg w-75 py-3">
-                    <i class="bi bi-building"></i> Proveedores
-                </a>
-
-                <a href="{% url 'accounts_lilis:usuario_listar' %}" class="btn btn-danger btn-lg w-75 py-3">
-                    <i class="bi bi-people"></i> Usuarios
-                </a>
-                {% endif %}
-
-            </div>
-
+        <div class="col">
+            <a href="{% url 'mostrar_todos_productos' %}" class="text-decoration-none text-dark">
+                <div class="card-menu shadow-lg">
+                    <i class="bi bi-cart4 icono-menu"></i>  
+                    <h4 class="card-title">Productos</h4>
+                    <p class="info-number">{{ total_productos }} registrados</p>
+                    <p class="text-secondary small">Administrar inventario, precios y categorías.</p>
+                </div>
+            </a>
         </div>
+
+        <div class="col">
+            <a href="{% url 'proveedores:listar' %}" class="text-decoration-none text-dark">
+                <div class="card-menu shadow-lg">
+                    <i class="bi bi-truck icono-menu"></i> 
+                    <h4 class="card-title">Proveedores</h4>
+                    <p class="info-number">{{ total_proveedores }} registrados</p>
+                    <p class="text-secondary small">Gestionar contactos y acuerdos comerciales.</p>
+                </div>
+            </a>
+        </div>
+
+        {% if request.user.rol == "ADMIN" %}
+        <div class="col">
+            <a href="{% url 'accounts_lilis:usuario_listar' %}" class="text-decoration-none text-dark">
+                <div class="card-menu shadow-lg">
+                    <i class="bi bi-people-fill icono-menu"></i> 
+                    <h4 class="card-title">Usuarios</h4>
+                    <p class="info-number">{{ total_usuarios }} registrados</p>
+                    <p class="text-secondary small">Administrar permisos y accesos.</p>
+                </div>
+            </a>
+        </div>
+        {% endif %}
+
+        {% endif %}
+
     </div>
 </div>
 

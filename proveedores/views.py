@@ -13,31 +13,22 @@ def tiene_permiso_proveedores(user):
 @login_required
 def mostrar_todos_proveedores(request):
     q = request.GET.get("q", "").strip()
-    per_page = request.GET.get("per_page", "15")
-    try:
-        per_page = int(per_page)
-    except:
-        per_page = 15
 
-    qs = Proveedor.objects.all().order_by("razon_social")
+    proveedores = Proveedor.objects.all().order_by("razon_social")
+
     if q:
-        qs = qs.filter(
+        proveedores = proveedores.filter(
             Q(razon_social__icontains=q) |
             Q(rut_nif__icontains=q) |
             Q(email__icontains=q) |
             Q(ciudad__icontains=q)
         )
 
-    paginator = Paginator(qs, per_page)
-    page_number = request.GET.get("page")
-    page_obj = paginator.get_page(page_number)
-
     context = {
-        "page_obj": page_obj,
-        "q": q,
-        "per_page": per_page,
+        "proveedores": proveedores,   
     }
     return render(request, "mantenedores/proveedores/todos_proveedores.html", context)
+
 
 @user_passes_test(tiene_permiso_proveedores)
 @login_required

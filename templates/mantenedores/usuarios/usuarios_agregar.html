@@ -18,34 +18,12 @@
     border: 2px solid #ffeaea;
     animation: fadeSlide .6s ease-out;
 }
-@keyframes fadeSlide { from {opacity:0; transform: translateY(50px);} to{opacity:1; transform: translateY(0);} }
 
-#strengthBar {
-    height: 6px;
-    width: 100%;
-    background: #ddd;
-    border-radius: 20px;
-    transition: width .3s ease;
-}
-#strengthMsg {
-    font-size: 0.85rem;
-    font-weight: bold;
-    margin-top: 4px;
-}
-
-#matchMsg {
-    font-size: 0.85rem;
-    font-weight: bold;
-    margin-top: 4px;
-}
-
-#btnGuardar:disabled {
-    background-color: #a6a6a6 !important;
-    border-color: #a6a6a6 !important;
-    cursor: not-allowed;
+@keyframes fadeSlide { 
+    from {opacity:0; transform: translateY(50px);} 
+    to{opacity:1; transform: translateY(0);} 
 }
 </style>
-
 
 <div class="d-flex justify-content-center align-items-start py-4">
 <div class="auth-card">
@@ -57,6 +35,7 @@
         {% csrf_token %}
 
         <div class="row">
+
             <div class="col-md-6 mb-3">
                 {{ form.username.label_tag }}
                 {{ form.username }}
@@ -90,6 +69,14 @@
             </div>
 
             <div class="col-md-6 mb-3">
+                {{ form.telefono.label_tag }}
+                {{ form.telefono }}
+                {% if form.telefono.errors %}
+                    <p class="text-danger small fw-bold">{{ form.telefono.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div class="col-md-6 mb-3">
                 {{ form.rol.label_tag }}
                 {{ form.rol }}
             </div>
@@ -99,78 +86,27 @@
                 {{ form.estado }}
             </div>
 
-            <hr>
-
             <div class="col-md-6 mb-3">
-                {{ form.password1.label_tag }}
-                {{ form.password1 }}
-                {% if form.password1.errors %}
-                    <p class="text-danger small fw-bold">{{ form.password1.errors.0 }}</p>
-                {% endif %}
+                {{ form.ultimo_acceso.label_tag }}
+                {{ form.ultimo_acceso }}
             </div>
 
             <div class="col-md-6 mb-3">
-                {{ form.password2.label_tag }}
-                {{ form.password2 }}
-                {% if form.password2.errors %}
-                    <p class="text-danger small fw-bold">{{ form.password2.errors.0 }}</p>
-                {% endif %}
+                {{ form.sesiones_activas.label_tag }}
+                {{ form.sesiones_activas }}
             </div>
+
         </div>
 
         <div class="d-flex justify-content-center gap-3 mt-4">
             <button type="submit" class="btn btn-warning px-4">Agregar</button>
             <a href="{% url 'accounts_lilis:usuario_listar' %}" class="btn btn-outline-danger px-4">Volver</a>
         </div>
+
     </form>
 
 
 </div>
 </div>
-
-<script>
-const p1 = document.getElementById("password1");
-const p2 = document.getElementById("password2");
-const bar = document.getElementById("strengthBar");
-const msg = document.getElementById("strengthMsg");
-const matchMsg = document.getElementById("matchMsg");
-const btn = document.getElementById("btnGuardar");
-
-p1.addEventListener("input", checkStrength);
-p2.addEventListener("input", checkMatch);
-
-function checkStrength() {
-    const pwd = p1.value;
-    let strength = 0;
-
-    if (pwd.length >= 8) strength++;
-    if (/[A-Z]/.test(pwd)) strength++;
-    if (/[0-9]/.test(pwd)) strength++;
-    if (/[^A-Za-z0-9]/.test(pwd)) strength++;
-
-    const widths = ["10%", "40%", "70%", "100%"];
-    const colors = ["#b22222", "#c9781c", "#f0db4f", "#2ecc71"];
-    const texts  = ["Muy débil", "Débil", "Buena", "Fuerte"];
-
-    bar.style.width = widths[strength - 1] || "0";
-    bar.style.background = colors[strength - 1] || "#ddd";
-    msg.innerText = texts[strength - 1] || "";
-
-    checkMatch();
-}
-
-function checkMatch() {
-    if (p1.value && p2.value && p1.value !== p2.value) {
-        matchMsg.innerText = "Las contraseñas no coinciden.";
-        matchMsg.style.color = "#b22222";
-        btn.disabled = true;
-    } else {
-        matchMsg.innerText = "";
-        if (msg.innerText === "Buena" || msg.innerText === "Fuerte") {
-            btn.disabled = false;
-        }
-    }
-}
-</script>
 
 {% endblock contenido %}

@@ -1,9 +1,17 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from .views import RegisterView, login_personalizado, check_email,usuario_listar, usuario_agregar, usuario_editar, usuario_eliminar
 from .forms import CustomPasswordResetForm, CustomSetPasswordForm
 
-from .views import RegisterView, login_personalizado, check_email
+from .views import (
+    RegisterView,
+    login_personalizado,
+    check_email,
+    usuario_listar,
+    usuario_agregar,
+    usuario_editar,
+    usuario_eliminar,
+    CambioPasswordObligatorioView  
+)
 
 app_name = "accounts_lilis"
 
@@ -11,6 +19,13 @@ urlpatterns = [
     path("register/", RegisterView.as_view(), name="register"),
     path("login/", login_personalizado, name="login"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
+
+    path(
+        "cambiar-password-obligatorio/",
+        CambioPasswordObligatorioView.as_view(),
+        name="cambiar_password_obligatorio"
+    ),
+
     path("usuarios/", usuario_listar, name="usuario_listar"),
     path("usuarios/agregar/", usuario_agregar, name="usuario_agregar"),
     path("usuarios/editar/<int:id>/", usuario_editar, name="usuario_editar"),
@@ -29,7 +44,6 @@ urlpatterns = [
         ),
         name="password_reset",
     ),
-
 
     path(
         "password_reset/done/",

@@ -9,7 +9,6 @@
 
 <div class="container-fluid px-4">
 
-  <!-- Mensajes Django -->
   {% if messages %}
   <div class="mb-3">
     {% for message in messages %}
@@ -19,7 +18,6 @@
   {% endif %}
 
   <div class="card shadow-lg p-3 p-md-4" style="overflow:hidden;">
-    <!-- Toolbar superior -->
     <div class="row g-2 align-items-center mb-3">
       <div class="col-12 col-md-3">
         <a href="{% url 'accounts_lilis:usuario_agregar' %}" class="btn btn-danger w-100 fw-bold">
@@ -68,7 +66,6 @@
       </div>
     </div>
 
-    <!-- Tabla -->
     <div class="table-responsive">
       <table id="tablaUsuarios" class="table table-hover align-middle mb-0">
         <thead class="text-white" style="background-color:#B22222;">
@@ -107,7 +104,6 @@
             <td class="text-end text-nowrap">
               <a href="{% url 'accounts_lilis:usuario_editar' u.id %}" class="btn btn-warning btn-sm me-1">Editar</a>
 
-              <!-- Botón que abre modal de confirmación -->
               <button type="button"
                       class="btn btn-danger btn-sm"
                       data-bs-toggle="modal"
@@ -123,7 +119,6 @@
       </table>
     </div>
 
-    <!-- Paginación -->
     <div class="d-flex justify-content-between align-items-center pt-3">
       <div class="small text-muted" id="pagerInfo"></div>
       <div class="btn-group">
@@ -134,7 +129,6 @@
   </div>
 </div>
 
-<!-- Modal Bootstrap: Confirmar eliminar -->
 <div class="modal fade" id="confirmEliminarModal" tabindex="-1" aria-labelledby="confirmEliminarLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -157,7 +151,6 @@
   </div>
 </div>
 
-<!-- JS: filtros, buscador, paginador, exportar, modal -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const tbody = document.querySelector("#tablaUsuarios tbody");
@@ -222,18 +215,15 @@ document.addEventListener("DOMContentLoaded", () => {
   prevBtn.addEventListener("click", () => { page--; pintarPagina(); });
   nextBtn.addEventListener("click", () => { page++; pintarPagina(); });
 
-  // Inicial
+  
   rows.forEach(tr => tr.dataset.visible = "1");
   pintarPagina();
 
-  // Exportar Excel (solo filas visibles)
   document.getElementById("excelExport").addEventListener("click", () => {
     const head = document.querySelector("#tablaUsuarios thead").outerHTML;
     const bodyVisible = visibles().map(tr => {
-      // Clonar fila y esconder la primera celda (#) para exportar limpia
       const c = tr.cloneNode(true);
       c.querySelector("td").remove();
-      // remover acciones
       c.lastElementChild.remove();
       return c.outerHTML;
     }).join("");
@@ -245,7 +235,6 @@ document.addEventListener("DOMContentLoaded", () => {
     a.click();
   });
 
-  // Modal eliminar
   const modal = document.getElementById('confirmEliminarModal');
   modal.addEventListener('show.bs.modal', event => {
     const btn = event.relatedTarget;

@@ -42,13 +42,11 @@
 <body>
 
   <div class="container py-5">
-    <!-- Header -->
     <div class="page-header">
       <h1 class="fw-bold">Productos de {{ categoria }}</h1>
       <p class="lead">Elige tu favorito y descubre su detalle</p>
     </div>
 
-    <!-- Productos -->
     <div class="row">
       {% for producto in productos %}
       <div class="col-md-3 mb-4">
@@ -63,7 +61,6 @@
       {% endfor %}
     </div>
 
-    <!-- Volver -->
     <div class="text-center mt-4">
       <a href="{% url 'catalogo' %}" class="btn btn-outline-danger">Volver al catálogo principal</a>
     </div>
