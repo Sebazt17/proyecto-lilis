@@ -7,6 +7,15 @@
 
 {% block contenido %}
 
+{% if not proveedores_crear %}
+<div class="alert alert-danger text-center fw-bold mt-4">
+    🚫 No tienes permisos para agregar proveedores.
+</div>
+<div class="text-center mt-3">
+    <a href="{% url 'proveedores:listar' %}" class="btn btn-outline-danger fw-bold">Volver</a>
+</div>
+{% else %}
+
 <div class="card mx-auto mb-4 shadow-lg" style="max-width: 1200px;">
     <form method="post" class="p-4">
         {% csrf_token %}
@@ -155,5 +164,6 @@
 
     </form>
 </div>
+{% endif %}
 
 {% endblock contenido %}

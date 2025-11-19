@@ -74,8 +74,7 @@
 <div class="container my-5">
     <div class="row row-cols-1 row-cols-md-3 g-4 justify-content-center">
 
-        {% if request.user.rol in "ADMIN OPER_INVENTARIO OPER_PRODUCCION" %}
-
+        {% if productos_ver %} 
         <div class="col">
             <a href="{% url 'mostrar_todos_productos' %}" class="text-decoration-none text-dark">
                 <div class="card-menu shadow-lg">
@@ -86,7 +85,9 @@
                 </div>
             </a>
         </div>
+        {% endif %}
 
+        {% if proveedores_ver %}
         <div class="col">
             <a href="{% url 'proveedores:listar' %}" class="text-decoration-none text-dark">
                 <div class="card-menu shadow-lg">
@@ -97,8 +98,9 @@
                 </div>
             </a>
         </div>
+        {% endif %}
 
-        {% if request.user.rol == "ADMIN" %}
+        {% if usuarios_ver %}
         <div class="col">
             <a href="{% url 'accounts_lilis:usuario_listar' %}" class="text-decoration-none text-dark">
                 <div class="card-menu shadow-lg">
@@ -109,8 +111,6 @@
                 </div>
             </a>
         </div>
-        {% endif %}
-
         {% endif %}
 
     </div>

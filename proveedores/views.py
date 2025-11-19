@@ -1,16 +1,30 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse, HttpResponse
-from django.core.paginator import Paginator
 from django.db.models import Q
 from .models import Proveedor
 from .forms import ProveedorForm
+from .permisos import permisos_proveedores_context
 
-def tiene_permiso_proveedores(user):
+# -------- VALIDACIONES DE ACCESO -------- #
+
+def puede_entrar_modulo(user):
+    return user.is_authenticated and user.rol in ["ADMIN", "OPER_COMPRAS", "AUDITOR"]
+
+def puede_crear(user):
     return user.is_authenticated and user.rol in ["ADMIN", "OPER_COMPRAS"]
 
-@user_passes_test(tiene_permiso_proveedores)
+def puede_editar(user):
+    return user.is_authenticated and user.rol in ["ADMIN", "OPER_COMPRAS"]
+
+def puede_eliminar(user):
+    return user.is_authenticated and user.rol == "ADMIN"
+
+
+# -------- VISTAS -------- #
+
 @login_required
+@user_passes_test(puede_entrar_modulo)
 def mostrar_todos_proveedores(request):
     q = request.GET.get("q", "").strip()
 
@@ -25,38 +39,56 @@ def mostrar_todos_proveedores(request):
         )
 
     context = {
-        "proveedores": proveedores,   
+        "proveedores": proveedores,
+        **permisos_proveedores_context(request.user),
     }
     return render(request, "mantenedores/proveedores/todos_proveedores.html", context)
 
 
-@user_passes_test(tiene_permiso_proveedores)
 @login_required
+@user_passes_test(puede_crear)
 def crear_proveedor(request):
     form = ProveedorForm(request.POST or None)
+
     if request.method == "POST" and form.is_valid():
         form.save()
         return redirect("proveedores:listar")
-    return render(request, "mantenedores/proveedores/MantenedorAgregarProveedor.html", {"form": form})
 
-@user_passes_test(tiene_permiso_proveedores)
+    return render(
+        request,
+        "mantenedores/proveedores/MantenedorAgregarProveedor.html",
+        {
+            "form": form,
+            **permisos_proveedores_context(request.user),
+        }
+    )
+
+
 @login_required
+@user_passes_test(puede_editar)
 def editar_proveedor(request, id):
     proveedor = get_object_or_404(Proveedor, id=id)
     form = ProveedorForm(request.POST or None, instance=proveedor)
+
     if request.method == "POST" and form.is_valid():
         form.save()
         return redirect("proveedores:listar")
-    return render(request, "mantenedores/proveedores/MantenedorEditarProveedor.html", {"form": form, "proveedor": proveedor})
 
-@user_passes_test(lambda u: u.rol == "ADMIN")
+    return render(
+        request,
+        "mantenedores/proveedores/MantenedorEditarProveedor.html",
+        {
+            "form": form,
+            "proveedor": proveedor,
+            **permisos_proveedores_context(request.user),
+        }
+    )
+
+
 @login_required
+@user_passes_test(puede_eliminar)
 def eliminar_proveedor(request, id):
     proveedor = get_object_or_404(Proveedor, id=id)
-
-    if request.method == "POST" and request.headers.get("x-requested-with") == "XMLHttpRequest":
-        proveedor.delete()
-        return JsonResponse({"ok": True})
 
     if request.method == "POST":
         proveedor.delete()
@@ -64,11 +96,14 @@ def eliminar_proveedor(request, id):
 
     return redirect("proveedores:listar")
 
-@user_passes_test(tiene_permiso_proveedores)
+
 @login_required
+@user_passes_test(puede_entrar_modulo)
 def exportar_proveedores_excel(request):
+    # Auditor puede exportar, no es "creación"
     q = request.GET.get("q", "").strip()
     qs = Proveedor.objects.all().order_by("razon_social")
+
     if q:
         qs = qs.filter(
             Q(razon_social__icontains=q) |
@@ -78,7 +113,6 @@ def exportar_proveedores_excel(request):
         )
 
     from openpyxl import Workbook
-    from openpyxl.utils import get_column_letter
 
     wb = Workbook()
     ws = wb.active
@@ -107,19 +141,10 @@ def exportar_proveedores_excel(request):
             p.get_estado_display() if hasattr(p, "get_estado_display") else p.estado,
         ])
 
-    for col in ws.columns:
-        max_len = 0
-        col_letter = get_column_letter(col[0].column)
-        for cell in col:
-            try:
-                max_len = max(max_len, len(str(cell.value or "")))
-            except:
-                pass
-        ws.column_dimensions[col_letter].width = min(max_len + 2, 45)
-
-    resp = HttpResponse(
+    from openpyxl.writer.excel import save_virtual_workbook
+    respuesta = HttpResponse(
+        save_virtual_workbook(wb),
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-    resp["Content-Disposition"] = 'attachment; filename="proveedores.xlsx"'
-    wb.save(resp)
-    return resp
+    respuesta["Content-Disposition"] = 'attachment; filename="proveedores.xlsx"'
+    return respuesta

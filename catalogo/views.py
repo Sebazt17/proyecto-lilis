@@ -53,14 +53,27 @@ def empresa(request):
     return render(request, "catalogo/empresa.html", data)
 
 
+# ⛔ Qué roles pueden entrar al módulo de productos
 def tiene_permiso_productos(user):
-    return user.is_authenticated and user.rol in ["ADMIN", "OPER_INVENTARIO", "OPER_PRODUCCION"]
-
-
+    return user.is_authenticated and user.rol in [
+        "ADMIN",
+        "OPER_INVENTARIO",
+        "OPER_PRODUCCION",
+        "OPER_VENTAS",
+        "ANALISTA_FIN",
+        "AUDITOR"
+    ]
 
 
 @login_required
 def mantenedores(request):
+    user = request.user
+
+    # --- Permisos según matriz ---
+    productos_ver = user.rol in ["ADMIN", "OPER_INVENTARIO", "OPER_PRODUCCION", "OPER_VENTAS", "ANALISTA_FIN", "AUDITOR"]
+    proveedores_ver = user.rol in ["ADMIN", "OPER_COMPRAS", "AUDITOR"]
+    usuarios_ver = user.rol == "ADMIN"
+
     total_productos = Producto.objects.count()
     total_proveedores = Proveedor.objects.count()
     total_usuarios = Usuario.objects.count()
@@ -69,6 +82,29 @@ def mantenedores(request):
         "total_productos": total_productos,
         "total_proveedores": total_proveedores,
         "total_usuarios": total_usuarios,
+
+        "productos_ver": productos_ver,
+        "proveedores_ver": proveedores_ver,
+        "usuarios_ver": usuarios_ver,
+    })
+
+
+@user_passes_test(tiene_permiso_productos)
+@login_required
+def mostrar_todos_productos(request):
+    productos = Producto.objects.select_related("categoria").all()
+    categorias = Categoria.objects.all()
+
+    rol = request.user.rol
+
+    return render(request, 'mantenedores/productos/todos_productos.html', {
+        'productos': productos,
+        'categorias': categorias,
+
+        # PERMISOS (según la matriz oficial)
+        'productos_crear': rol in ["ADMIN", "OPER_COMPRAS", "OPER_VENTAS", "OPER_INVENTARIO"],
+        'productos_editar': rol in ["ADMIN", "OPER_COMPRAS", "OPER_VENTAS", "OPER_INVENTARIO"],
+        'productos_eliminar': rol == "ADMIN",
     })
 
 
@@ -76,25 +112,28 @@ def mantenedores(request):
 @user_passes_test(tiene_permiso_productos)
 @login_required
 def MantenedorAgregarProducto(request):
+
+    user = request.user
+
+    if user.rol not in ["ADMIN", "OPER_INVENTARIO", "OPER_VENTAS"]:
+        return redirect("mostrar_todos_productos")
+
     form = ProductoForm()
-    return render(request, 'mantenedores/productos/MantenedorAgregarProducto.html', {'form': form})
-
-
-@user_passes_test(tiene_permiso_productos)
-@login_required
-def mostrar_todos_productos(request):
-    productos = Producto.objects.select_related("categoria").all()
-    categorias = Categoria.objects.all()   
-    return render(request, 'mantenedores/productos/todos_productos.html', {
-        'productos': productos,
-        'categorias': categorias
+    return render(request, 'mantenedores/productos/MantenedorAgregarProducto.html', {
+        "form": form,
+        "productos_crear": True
     })
-
 
 
 @user_passes_test(tiene_permiso_productos)
 @login_required
 def crear_producto(request):
+
+    user = request.user
+
+    if user.rol not in ["ADMIN", "OPER_INVENTARIO", "OPER_VENTAS"]:
+        return redirect("mostrar_todos_productos")
+
     if request.method == "POST":
         form = ProductoForm(request.POST, request.FILES)
 
@@ -102,41 +141,45 @@ def crear_producto(request):
             form.save()
             messages.success(request, "✅ Producto creado correctamente.")
             return redirect("mostrar_todos_productos")
-        else:
-            messages.error(request, "❌ Corrige los errores del formulario.")
 
+        messages.error(request, "❌ Corrige los errores del formulario.")
     else:
         form = ProductoForm()
 
-    return render(request, "mantenedores/productos/MantenedorAgregarProducto.html", {"form": form})
-
+    return render(request, "mantenedores/productos/MantenedorAgregarProducto.html", {
+        "form": form,
+        "productos_crear": True
+    })
 
 
 @user_passes_test(tiene_permiso_productos)
 @login_required
 def editar_producto(request, id):
+
+    user = request.user
+
+    if user.rol not in ["ADMIN", "OPER_INVENTARIO", "OPER_VENTAS"]:
+        return redirect("mostrar_todos_productos")
+
     producto = get_object_or_404(Producto, id=id)
 
     if request.method == "POST":
         form = ProductoForm(request.POST, request.FILES, instance=producto)
-
         if form.is_valid():
             form.save()
-            messages.success(request, "✅ Producto modificado correctamente.")
+            messages.success(request, "Producto actualizado.")
             return redirect("mostrar_todos_productos")
-        else:
-            messages.error(request, "❌ Corrige los errores del formulario.")
-
     else:
         form = ProductoForm(instance=producto)
 
     return render(request, 'mantenedores/productos/MantenedorEditarProducto.html', {
         "form": form,
-        "producto": producto
+        "producto": producto,
+        "productos_editar": True
     })
 
 
-@user_passes_test(lambda u: u.rol == "ADMIN")  
+@user_passes_test(lambda u: u.rol == "ADMIN")
 @login_required
 def eliminar_producto(request, id):
     producto = get_object_or_404(Producto, id=id)
@@ -145,4 +188,4 @@ def eliminar_producto(request, id):
         producto.delete()
         return redirect('mostrar_todos_productos')
 
-    return render(request, 'mantenedores/confirmar_eliminacion.html', {'producto': producto})
+    return render(request, 'mantenedores/confirmar_eliminacion.html', {"producto": producto})

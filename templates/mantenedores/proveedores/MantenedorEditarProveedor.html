@@ -7,6 +7,14 @@
 
 {% block contenido %}
 
+{% if not proveedores_editar %}
+<div class="alert alert-danger text-center fw-bold mt-4">
+    🚫 No tienes permisos para editar proveedores.
+</div>
+<div class="text-center mt-3">
+    <a href="{% url 'proveedores:listar' %}" class="btn btn-outline-danger fw-bold">Volver</a>
+</div>
+{% else %}
 <style>
 .card-form {
     background: white;         
@@ -131,5 +139,7 @@
         </form>
     </div>
 </div>
+
+{% endif %}
 
 {% endblock contenido %}

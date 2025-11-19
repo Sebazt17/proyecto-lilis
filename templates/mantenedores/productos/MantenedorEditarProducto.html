@@ -26,7 +26,6 @@
             <div class="row g-3">
 
                 <div class="col-md-4 text-center">
-                    
                     {% if producto.imagen %}
                         <img id="preview-img" src="{{ producto.imagen.url }}"
                              class="rounded shadow-sm mb-3"
@@ -150,7 +149,9 @@
             </div>
 
             <div class="text-center mt-4">
+                {% if productos_editar %}
                 <button type="submit" class="btn btn-warning px-4 fw-bold">Actualizar Producto</button>
+                {% endif %}
                 <a href="{% url 'mostrar_todos_productos' %}" class="btn btn-danger px-4 fw-bold">Cancelar</a>
             </div>
 

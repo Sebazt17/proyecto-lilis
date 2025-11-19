@@ -6,6 +6,9 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import PasswordChangeView
 from django.urls import reverse_lazy
+# Aseguramos que los imports necesarios estén presentes
+from .permisos import role_required, permisos_por_rol 
+
 
 from .models import Usuario
 from .forms import RegisterForm, UsuarioAdminForm, CustomSetPasswordForm
@@ -35,21 +38,34 @@ class RegisterView(View):
         return render(request, self.template_name, {"form": form})
 
 
-
+# Función de prueba de administrador original (se mantiene, pero no se usa en las vistas de usuarios)
 def permiso_admin(user):
     return user.is_authenticated and user.rol == "ADMIN"
 
 
 
+# VISTAS MODIFICADAS CON @role_required("ADMIN") y permisos_por_rol
+# --------------------------------------------------------------------------------------------------
+
 @login_required
 @user_passes_test(permiso_admin)
 def usuario_listar(request):
     usuarios = Usuario.objects.all().order_by("id")
-    return render(request, "mantenedores/usuarios/usuarios_listar.html", {"usuarios": usuarios})
+
+    context = {
+        "usuarios": usuarios,
+        "usuarios_ver": request.user.rol == "ADMIN",
+        "usuarios_crear": request.user.rol == "ADMIN",
+        "usuarios_editar": request.user.rol == "ADMIN",
+        "usuarios_eliminar": request.user.rol == "ADMIN",
+    }
+
+    return render(request, "mantenedores/usuarios/usuarios_listar.html", context)
+
 
 
 @login_required
-@user_passes_test(permiso_admin)
+@role_required("ADMIN")
 def usuario_agregar(request):
     form = UsuarioAdminForm(request.POST or None)
 
@@ -59,7 +75,7 @@ def usuario_agregar(request):
 
             temp_pass = "LILIS-" + ''.join(random.choices(string.ascii_letters + string.digits, k=6)) + "!"
             usuario.set_password(temp_pass)
-            usuario.requiere_cambio_password = True  
+            usuario.requiere_cambio_password = True 
             usuario.save()
 
             send_mail(
@@ -87,11 +103,14 @@ def usuario_agregar(request):
 
         messages.error(request, "❌ Revisa los errores del formulario.")
 
-    return render(request, "mantenedores/usuarios/usuarios_agregar.html", {"form": form})
+    return render(request, "mantenedores/usuarios/usuarios_agregar.html", {
+        "form": form,
+        **permisos_por_rol(request.user)
+    })
 
 
 @login_required
-@user_passes_test(permiso_admin)
+@role_required("ADMIN")
 def usuario_editar(request, id):
     usuario = get_object_or_404(Usuario, id=id)
     form = UsuarioAdminForm(request.POST or None, instance=usuario)
@@ -117,19 +136,21 @@ def usuario_editar(request, id):
             messages.success(request, "✅ Usuario modificado correctamente.")
             return redirect("accounts_lilis:usuario_listar")
         else:
-            print("ERRORES:", form.errors)   
+            print("ERRORES:", form.errors)  
 
     return render(
         request,
         "mantenedores/usuarios/usuarios_editar.html",
-        {"form": form, "usuario": usuario}
+        {
+            "form": form,
+            "usuario": usuario,
+            **permisos_por_rol(request.user)
+        }
     )
 
 
-
-
 @login_required
-@user_passes_test(permiso_admin)
+@role_required("ADMIN")
 def usuario_eliminar(request, id):
     usuario = get_object_or_404(Usuario, id=id)
 
@@ -141,7 +162,7 @@ def usuario_eliminar(request, id):
     messages.success(request, "✅ Usuario eliminado.")
     return redirect("accounts_lilis:usuario_listar")
 
-
+# --------------------------------------------------------------------------------------------------
 
 
 def login_personalizado(request):
@@ -166,7 +187,27 @@ def login_personalizado(request):
             if user.requiere_cambio_password:
                 return redirect("accounts_lilis:cambiar_password_obligatorio")
 
-            if user.rol == "ADMIN":
+            ROL = user.rol
+
+            if ROL == "ADMIN":
+                return redirect("mantenedores")
+
+            if ROL == "OPER_COMPRAS":
+                return redirect("mantenedores")
+
+            if ROL == "OPER_INVENTARIO":
+                return redirect("mantenedores")
+
+            if ROL == "OPER_PRODUCCION":
+                return redirect("mantenedores")
+
+            if ROL == "OPER_VENTAS":
+                return redirect("mantenedores")
+
+            if ROL == "ANALISTA_FIN":
+                return redirect("mantenedores")
+
+            if ROL == "AUDITOR":
                 return redirect("mantenedores")
 
             return redirect("landing")
@@ -178,7 +219,6 @@ def login_personalizado(request):
 
 
 
-
 class CambioPasswordObligatorioView(PasswordChangeView):
     template_name = "accounts_lilis/password_reset_temporal.html"
     form_class = CustomSetPasswordForm
@@ -186,7 +226,7 @@ class CambioPasswordObligatorioView(PasswordChangeView):
 
     def form_valid(self, form):
         usuario = self.request.user
-        usuario.requiere_cambio_password = False  
+        usuario.requiere_cambio_password = False 
         usuario.save()
         messages.success(self.request, "✅ Contraseña actualizada correctamente.")
         return super().form_valid(form)

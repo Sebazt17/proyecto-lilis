@@ -22,9 +22,11 @@
         <div class="row g-2 align-items-center mb-3">
 
             <div class="col-12 col-md-3">
+                {% if productos_crear %}
                 <a href="{% url 'mantenedor_agregar_producto' %}" class="btn btn-danger w-100 fw-bold">
                     + Agregar Producto
                 </a>
+                {% endif %}
             </div>
 
             <div class="col-6 col-md-3">
@@ -83,25 +85,34 @@
                         <td>
                             {% if p.imagen %}
                                 <img src="{{ p.imagen.url }}" width="70" class="rounded shadow-sm"
-                                     style="object-fit:cover;">
+                                    style="object-fit:cover;">
                             {% else %}
                                 <span class="text-muted">Sin imagen</span>
                             {% endif %}
                         </td>
 
                         <td class="text-end text-nowrap">
-                            <a href="{% url 'editar_producto' p.id %}" class="btn btn-warning btn-sm me-1">
-                                Editar
-                            </a>
 
-                            <button type="button"
-                                class="btn btn-danger btn-sm"
-                                data-bs-toggle="modal"
-                                data-bs-target="#confirmEliminarModal"
-                                data-url="{% url 'eliminar_producto' p.id %}"
-                                data-nombre="{{ p.nombre }}">
-                                Eliminar
-                            </button>
+                            {% if productos_editar or productos_eliminar %}
+                                
+                                {% if productos_editar %}
+                                <a href="{% url 'editar_producto' p.id %}" class="btn btn-warning btn-sm me-1">Editar</a>
+                                {% endif %}
+
+                                {% if productos_eliminar %}
+                                <button type="button"
+                                    class="btn btn-danger btn-sm"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#confirmEliminarModal"
+                                    data-url="{% url 'eliminar_producto' p.id %}"
+                                    data-nombre="{{ p.nombre }}">
+                                    Eliminar
+                                </button>
+                                {% endif %}
+
+                            {% else %}
+                                <span class="badge bg-secondary">Sin permisos</span>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

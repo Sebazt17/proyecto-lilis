@@ -22,14 +22,18 @@
     <div class="row g-2 align-items-center mb-3">
 
       <div class="col-12 col-md-3">
-        <a href="{% url 'proveedores:agregar' %}" class="btn btn-danger fw-bold">
-          + Agregar Proveedor
-        </a>
+
+        {% if proveedores_crear %}
+          <a href="{% url 'proveedores:agregar' %}" class="btn btn-danger fw-bold">+ Agregar Proveedor</a>
+        {% else %}
+          <button class="btn btn-secondary fw-bold w-100" disabled>Sin permiso para agregar</button>
+        {% endif %}
+
       </div>
 
       <div class="col-12 col-md-3">
         <input type="text" id="buscador" class="form-control"
-               placeholder="🔎 Buscar proveedor / rut / correo / ciudad ">
+              placeholder="🔎 Buscar proveedor / rut / correo / ciudad ">
       </div>
 
       <div class="col-6 col-md-2">
@@ -61,26 +65,39 @@
           </tr>
         </thead>
         <tbody>
+
           {% for p in proveedores %}
           <tr data-search="{{ p.razon_social }} {{ p.rut_nif }} {{ p.email }} {{ p.telefono }} {{ p.ciudad }} {{ p.region.nombre }}">
+            
             <td class="text-muted"></td>
+
             <td>{{ p.razon_social }}</td>
             <td>{{ p.rut_nif }}</td>
             <td class="text-nowrap">{{ p.email }}</td>
             <td>{{ p.telefono }}</td>
             <td>{{ p.ciudad }}</td>
             <td>{{ p.region.nombre }}</td>
+
             <td>
               {% if p.estado == "ACTIVO" %}
-              <span class="badge bg-success">Activo</span>
+                <span class="badge bg-success">Activo</span>
               {% else %}
-              <span class="badge bg-secondary">Inactivo</span>
+                <span class="badge bg-secondary">Inactivo</span>
               {% endif %}
             </td>
 
+            <!-- ACCIONES -->
             <td class="text-end text-nowrap">
-              <a href="{% url 'proveedores:editar' p.id %}" class="btn btn-warning btn-sm me-1">Editar</a>
 
+              {% if not proveedores_editar and not proveedores_eliminar %}
+                <span class="text-muted small">Sin permisos</span>
+              {% endif %}
+
+              {% if proveedores_editar %}
+              <a href="{% url 'proveedores:editar' p.id %}" class="btn btn-warning btn-sm me-1">Editar</a>
+              {% endif %}
+
+              {% if proveedores_eliminar %}
               <button type="button"
                       class="btn btn-danger btn-sm"
                       data-bs-toggle="modal"
@@ -89,9 +106,13 @@
                       data-nombre="{{ p.razon_social }}">
                 Eliminar
               </button>
+              {% endif %}
+
             </td>
+
           </tr>
           {% endfor %}
+
         </tbody>
       </table>
     </div>
@@ -103,10 +124,11 @@
         <button id="nextPage" class="btn btn-outline-secondary btn-sm">Siguiente</button>
       </div>
     </div>
+
   </div>
 </div>
 
-
+<!-- MODAL -->
 <div class="modal fade" id="confirmEliminarModal" tabindex="-1" aria-labelledby="labelEliminar" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -128,7 +150,6 @@
     </div>
   </div>
 </div>
-
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
@@ -185,31 +206,11 @@ document.addEventListener("DOMContentLoaded", () => {
   pintarPagina();
 
 
-  document.getElementById("excelExport").addEventListener("click", () => {
-    const head = document.querySelector("#tablaProveedores thead").outerHTML;
-    const bodyVisible = visibles().map(tr => {
-      const row = tr.cloneNode(true);
-      row.querySelector("td").remove();
-      row.lastElementChild.remove();
-      return row.outerHTML;
-    }).join("");
-
-    const html = `<table>${head.replace('Acciones','')}${bodyVisible}</table>`;
-    const a = document.createElement("a");
-    a.href = "data:application/vnd.ms-excel," + encodeURIComponent(html);
-    a.download = "proveedores_lilis.xls";
-    a.click();
-  });
-
-
   const modal = document.getElementById("confirmEliminarModal");
   modal.addEventListener("show.bs.modal", event => {
     const btn = event.relatedTarget;
-    const url = btn.dataset.url;
-    const nombre = btn.dataset.nombre;
-
-    document.getElementById("proveedorName").textContent = nombre;
-    document.getElementById("formEliminar").action = url;
+    document.getElementById("proveedorName").textContent = btn.dataset.nombre;
+    document.getElementById("formEliminar").action = btn.dataset.url;
   });
 });
 </script>
