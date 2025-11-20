@@ -9,6 +9,7 @@ urlpatterns = [
     path('accounts/', include('accounts_lilis.urls')),
     path('proveedores/', include('proveedores.urls')),
     path('mantenedores/', catalogo_views.mantenedores, name="mantenedores"),
+    path('inventario/', include(('inventario.urls', 'inventario'), namespace='inventario')),
 
     path('', include('catalogo.urls')),
 ]

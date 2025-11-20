@@ -42,6 +42,11 @@ def permisos_por_rol(user):
         "productos_editar": rol in ["ADMIN", "OPER_COMPRAS", "OPER_INVENTARIO", "OPER_VENTAS"],
         "productos_eliminar": rol == "ADMIN",
 
+        # Inventario
+        "inventario_ver": rol in ["ADMIN", "OPER_INVENTARIO", "AUDITOR"],
+        "inventario_crear": rol in ["ADMIN", "OPER_INVENTARIO"],
+
+
         # Otros
         "solo_lectura": rol == "AUDITOR"
     }

@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'catalogo',
     'proveedores',
     'accounts_lilis',
+    'inventario',
 ]
 
 MIDDLEWARE = [
@@ -76,12 +77,9 @@ DATABASES = {
         'NAME': 'proyecto_lilis',
         'USER': 'lilis_admin',
         'PASSWORD': 'lilisuser1234',
-        'HOST': 'localhost',
+        'HOST': '127.0.0.1',
         'PORT': '3306',
-        'OPTIONS': {
-            'init_command':'SET sql_mode ="STRICT_ALL_TABLES"',
-        },
-    },
+    }
 }
 
 

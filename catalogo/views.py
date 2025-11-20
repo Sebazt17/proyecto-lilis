@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from proveedores.models import Proveedor
 from accounts_lilis.models import Usuario
+from inventario.models import MovimientoInventario
 
 
 def landing(request):
@@ -73,19 +74,23 @@ def mantenedores(request):
     productos_ver = user.rol in ["ADMIN", "OPER_INVENTARIO", "OPER_PRODUCCION", "OPER_VENTAS", "ANALISTA_FIN", "AUDITOR"]
     proveedores_ver = user.rol in ["ADMIN", "OPER_COMPRAS", "AUDITOR"]
     usuarios_ver = user.rol == "ADMIN"
+    inventario_ver = user.rol in ["ADMIN", "OPER_INVENTARIO", "AUDITOR"]
 
     total_productos = Producto.objects.count()
     total_proveedores = Proveedor.objects.count()
     total_usuarios = Usuario.objects.count()
+    total_movimientos = MovimientoInventario.objects.count()
 
     return render(request, 'mantenedores/inicioMantenedores.html', {
         "total_productos": total_productos,
         "total_proveedores": total_proveedores,
         "total_usuarios": total_usuarios,
+        "total_movimientos": total_movimientos,
 
         "productos_ver": productos_ver,
         "proveedores_ver": proveedores_ver,
         "usuarios_ver": usuarios_ver,
+        "inventario_ver": inventario_ver,
     })
 
 
