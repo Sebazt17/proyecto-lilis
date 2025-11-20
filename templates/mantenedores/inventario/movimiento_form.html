@@ -1,50 +1,160 @@
 {% extends "mantenedores/paginaBase.html" %}
 {% load static %}
 
+{% block page_title %}
+{% if form.instance.pk %}
+Editar Movimiento de Inventario
+{% else %}
+Registrar Movimiento de Inventario
+{% endif %}
+{% endblock %}
+
 {% block titulo %}
-<h2 class="fw-bold text-center mb-4">Registrar Movimiento de Inventario</h2>
+<h2 class="text-center fw-bold mt-4">
+    {% if form.instance.pk %}
+        Editar Movimiento de Inventario
+    {% else %}
+        Registrar Movimiento de Inventario
+    {% endif %}
+</h2>
+<p class="text-center text-secondary mb-4">
+    Completa la información requerida para gestionar el inventario.
+</p>
 {% endblock titulo %}
 
 {% block contenido %}
-<div class="container-fluid px-4">
 
-    {% if messages %}
-        <div class="mb-3">
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} mb-2" role="alert">{{ message }}</div>
-            {% endfor %}
+<div class="card mx-auto mb-4 shadow-lg" style="max-width: 1200px; border-radius: 22px;">
+    <form method="post" class="p-4 p-md-5">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <!-- ================= DATOS DEL MOVIMIENTO ================= -->
+        <h4 class="mb-3 fw-bold text-danger">Datos del Movimiento</h4>
+        <div class="row">
+
+            <div class="col-md-4 mb-3">
+                {{ form.tipo.label_tag }}
+                {{ form.tipo }}
+                {% for error in form.tipo.errors %}
+                    <p class="text-danger small fw-bold">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="col-md-4 mb-3">
+                {{ form.producto.label_tag }}
+                {{ form.producto }}
+                {% for error in form.producto.errors %}
+                    <p class="text-danger small fw-bold">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="col-md-4 mb-3">
+                {{ form.proveedor.label_tag }}
+                {{ form.proveedor }}
+                {% for error in form.proveedor.errors %}
+                    <p class="text-danger small fw-bold">{{ error }}</p>
+                {% endfor %}
+            </div>
+
         </div>
-    {% endif %}
 
-    <div class="card border-0 shadow-sm">
-        <div class="card-body">
-            <form method="post" novalidate>
-                {% csrf_token %}
+        <hr class="my-4">
 
-                <div class="row g-3">
-                    {% for field in form %}
-                    <div class="col-12 col-md-6">
-                        <label class="form-label fw-semibold">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
-                        {{ field }}
-                        {% if field.errors %}
-                            <div class="text-danger small">
-                                {{ field.errors|striptags }}
-                            </div>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                </div>
+        <!-- ================= BODEGAS Y CANTIDAD ================= -->
+        <h4 class="mb-3 fw-bold text-danger">Bodegas y Cantidad</h4>
+        <div class="row">
 
-                <div class="d-flex justify-content-end mt-4 gap-2">
-                    <a href="{% url 'inventario:movimientos_listar' %}" class="btn btn-outline-secondary">
-                        Cancelar
-                    </a>
-                    <button type="submit" class="btn btn-danger fw-bold">
-                        Guardar Movimiento
-                    </button>
-                </div>
-            </form>
+            <div class="col-md-5 mb-3">
+                {{ form.bodega_origen.label_tag }}
+                {{ form.bodega_origen }}
+                {% for error in form.bodega_origen.errors %}
+                    <p class="text-danger small fw-bold">{{ error }}</p>
+                {% endfor %}
+            </div>
+            
+            
+
+            <div class="col-md-5 mb-2">
+                {{ form.bodega_destino.label_tag }}
+                {{ form.bodega_destino }}
+                {% for error in form.bodega_destino.errors %}
+                    <p class="text-danger small fw-bold">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="col-md-4 mb-3">
+                {{ form.cantidad.label_tag }}
+                {{ form.cantidad }}
+                {% for error in form.cantidad.errors %}
+                    <p class="text-danger small fw-bold mb-0">{{ error }}</p>
+                {% endfor %}
+            </div>
+
         </div>
-    </div>
+
+        <hr class="my-4">
+
+        <!-- ================= TRAZABILIDAD ================= -->
+        <h4 class="mb-3 fw-bold text-danger">Trazabilidad</h4>
+        <div class="row">
+
+            <div class="col-md-3 mb-3">
+                {{ form.lote.label_tag }}
+                {{ form.lote }}
+                {% for error in form.lote.errors %}
+                    <p class="text-danger small fw-bold">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="col-md-3 mb-3">
+                {{ form.serie.label_tag }}
+                {{ form.serie }}
+                {% for error in form.serie.errors %}
+                    <p class="text-danger small fw-bold">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="col-md-4 mb-3">
+                {{ form.fecha_vencimiento.label_tag }}
+                {{ form.fecha_vencimiento }}
+                {% for error in form.fecha_vencimiento.errors %}
+                    <p class="text-danger small fw-bold">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="col-12 mb-3">
+                {{ form.observaciones.label_tag }}
+                {{ form.observaciones }}
+                {% for error in form.observaciones.errors %}
+                    <p class="text-danger small fw-bold">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+        </div>
+
+        <!-- ================= BOTONES ================= -->
+        <div class="d-flex justify-content-end mt-4 gap-2">
+            <a href="{% url 'inventario:movimientos_listar' %}"
+               class="btn btn-outline-secondary px-4">
+                Cancelar
+            </a>
+
+            <button type="submit" class="btn btn-danger px-4 fw-bold">
+                {% if form.instance.pk %}
+                    Guardar cambios
+                {% else %}
+                    Guardar Movimiento
+                {% endif %}
+            </button>
+        </div>
+
+    </form>
 </div>
+
 {% endblock contenido %}

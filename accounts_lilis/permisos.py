@@ -1,8 +1,7 @@
-from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
+from django.contrib import messages
 from functools import wraps
 
-# Decorador principal
 def role_required(*roles_permitidos):
     def decorator(view_func):
         @wraps(view_func)
@@ -12,9 +11,11 @@ def role_required(*roles_permitidos):
                 return redirect("accounts_lilis:login")
 
             if request.user.rol not in roles_permitidos:
-                return HttpResponseForbidden("🚫 No tienes permisos para acceder a este módulo.")
+                messages.error(request, "No tienes permisos para acceder a este módulo.")
+                return redirect("mantenedores")
 
             return view_func(request, *args, **kwargs)
+
         return _wrapped_view
     return decorator
 

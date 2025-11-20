@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 
-from .models import MovimientoInventario, Bodega
+from .models import MovimientoInventario
 from .forms import MovimientoInventarioForm
 from accounts_lilis.permisos import permisos_por_rol, role_required
 
@@ -14,7 +14,10 @@ def movimientos_listar(request):
         "producto", "proveedor", "bodega_origen", "bodega_destino", "usuario"
     ).all()
 
-    permisos = permisos_por_rol(request.user.rol)
+    # OJO: si en tu proyecto local ya corrigiste permisos_por_rol para recibir "user",
+    # aquí usa permisos_por_rol(request.user) en vez de request.user.rol
+    permisos = permisos_por_rol(request.user)
+
     return render(request, "mantenedores/inventario/movimientos_listar.html", {
         "movimientos": movimientos,
         "permisos": permisos,
@@ -36,8 +39,61 @@ def movimiento_crear(request):
     else:
         form = MovimientoInventarioForm()
 
-    permisos = permisos_por_rol(request.user.rol)
+    permisos = permisos_por_rol(request.user)
     return render(request, "mantenedores/inventario/movimiento_form.html", {
         "form": form,
+        "permisos": permisos,
+    })
+
+
+@login_required
+@role_required("ADMIN", "OPER_INVENTARIO")
+def movimiento_editar(request, pk):
+    """
+    Editar un movimiento:
+    - Se pueden cambiar producto, proveedor, bodegas, tipo, cantidad, etc.
+    - La FECHA del movimiento NO se modifica.
+    """
+    movimiento = get_object_or_404(MovimientoInventario, pk=pk)
+    fecha_original = movimiento.fecha  # la protegemos
+
+    if request.method == "POST":
+        form = MovimientoInventarioForm(request.POST, instance=movimiento)
+        if form.is_valid():
+            movimiento_editado = form.save(commit=False)
+            movimiento_editado.fecha = fecha_original  # no dejamos que cambie
+            # si quieres registrar quién modificó, aquí podrías usar request.user
+            movimiento_editado.save()
+            messages.success(request, "✅ Movimiento de inventario actualizado correctamente.")
+            return redirect("inventario:movimientos_listar")
+        messages.error(request, "❌ Revisa los errores del formulario.")
+    else:
+        form = MovimientoInventarioForm(instance=movimiento)
+
+    permisos = permisos_por_rol(request.user)
+    # reutilizamos el mismo form de creación (por ahora no lo tocamos)
+    return render(request, "mantenedores/inventario/movimiento_form.html", {
+        "form": form,
+        "permisos": permisos,
+    })
+
+
+@login_required
+@role_required("ADMIN", "OPER_INVENTARIO")
+def movimiento_eliminar(request, pk):
+    """
+    Eliminar un movimiento de inventario.
+    Solo responde a POST (confirmación desde un formulario).
+    """
+    movimiento = get_object_or_404(MovimientoInventario, pk=pk)
+
+    if request.method == "POST":
+        movimiento.delete()
+        messages.success(request, "✅ Movimiento de inventario eliminado correctamente.")
+        return redirect("inventario:movimientos_listar")
+
+    permisos = permisos_por_rol(request.user)
+    return render(request, "mantenedores/inventario/movimiento_confirmar_eliminar.html", {
+        "movimiento": movimiento,
         "permisos": permisos,
     })
