@@ -1,9 +1,72 @@
-from datetime import date
 from django import forms
+from django.utils import timezone
 from .models import MovimientoInventario
 
 
 class MovimientoInventarioForm(forms.ModelForm):
+    # 👇 Campo cantidad: solo enteros positivos
+    cantidad = forms.DecimalField(
+        min_value=1,
+        max_digits=12,
+        decimal_places=0,
+        label="Cantidad",
+        error_messages={
+            "min_value": "La cantidad debe ser un número entero mayor a cero.",
+            "invalid": "La cantidad debe ser un número entero.",
+        },
+    )
+
+    # 👇 Lote obligatorio, con rango de longitud
+    lote = forms.CharField(
+        required=True,
+        min_length=3,
+        max_length=30,
+        label="Lote",
+        error_messages={
+            "required": "El lote es obligatorio.",
+            "min_length": "El lote debe tener al menos 3 caracteres.",
+            "max_length": "El lote no puede superar los 30 caracteres.",
+        },
+    )
+
+    # 👇 Serie obligatoria, con rango de longitud
+    serie = forms.CharField(
+        required=True,
+        min_length=3,
+        max_length=30,
+        label="Serie",
+        error_messages={
+            "required": "La serie es obligatoria.",
+            "min_length": "La serie debe tener al menos 3 caracteres.",
+            "max_length": "La serie no puede superar los 30 caracteres.",
+        },
+    )
+
+    # 👇 Observaciones obligatorias, con rango de longitud
+    observaciones = forms.CharField(
+        required=True,
+        min_length=5,
+        max_length=300,
+        label="Observaciones",
+        widget=forms.Textarea(attrs={"rows": 3, "maxlength": 300}),
+        error_messages={
+            "required": "Las observaciones son obligatorias.",
+            "min_length": "Las observaciones deben tener al menos 5 caracteres.",
+            "max_length": "Las observaciones no pueden superar los 300 caracteres.",
+        },
+    )
+
+    # 👇 Fecha de vencimiento obligatoria
+    fecha_vencimiento = forms.DateField(
+        required=True,
+        label="Fecha de vencimiento",
+        widget=forms.DateInput(attrs={"type": "date"}),
+        error_messages={
+            "required": "La fecha de vencimiento es obligatoria.",
+            "invalid": "Ingresa una fecha de vencimiento válida.",
+        },
+    )
+
     class Meta:
         model = MovimientoInventario
         fields = [
@@ -18,56 +81,26 @@ class MovimientoInventarioForm(forms.ModelForm):
             "fecha_vencimiento",
             "observaciones",
         ]
-        widgets = {
-            "fecha_vencimiento": forms.DateInput(attrs={"type": "date"}),
-            "observaciones": forms.Textarea(attrs={"rows": 3}),
-            "cantidad": forms.NumberInput(
-                attrs={
-                    "min": "1",
-                    "step": "1",   
-                }
-            ),
-        }
 
-    def clean_cantidad(self):
-        """
-        Valida que la cantidad sea un número entero positivo (sin decimales).
-        """
-        cantidad = self.cleaned_data.get("cantidad")
-
-        if cantidad is None:
-            return cantidad
-
-        if cantidad != int(cantidad):
+    def clean_fecha_vencimiento(self):
+        fecha = self.cleaned_data.get("fecha_vencimiento")
+        if fecha and fecha < timezone.localdate():
             raise forms.ValidationError(
-                "La cantidad debe ser un número entero (sin decimales)."
+                "La fecha de vencimiento no puede ser anterior a hoy."
             )
-
-        if cantidad <= 0:
-            raise forms.ValidationError(
-                "La cantidad debe ser mayor a cero."
-            )
-
-        # Devolvemos el entero (Django lo adapta al tipo del campo del modelo)
-        return int(cantidad)
+        return fecha
 
     def clean(self):
+        """
+        Validaciones de coherencia según el tipo de movimiento
+        (Ingreso, Salida, Transferencia, Devolución).
+        """
         cleaned_data = super().clean()
         tipo = cleaned_data.get("tipo")
         bodega_origen = cleaned_data.get("bodega_origen")
         bodega_destino = cleaned_data.get("bodega_destino")
-        fecha_venc = cleaned_data.get("fecha_vencimiento")
 
-
-        # Validaciones simples según tipo
-
-        if fecha_venc:
-            if fecha_venc < date.today():
-                raise forms.ValidationError(
-                    "La fecha de vencimiento no puede ser menor a la fecha actual."
-                )
-
-
+        # Reglas por tipo de movimiento (según requerimientos)
         if tipo == "TRANSFERENCIA":
             if not bodega_origen or not bodega_destino:
                 raise forms.ValidationError(
@@ -77,11 +110,13 @@ class MovimientoInventarioForm(forms.ModelForm):
                 raise forms.ValidationError(
                     "La bodega origen y destino no pueden ser la misma."
                 )
+
         elif tipo == "INGRESO":
             if not bodega_destino:
                 raise forms.ValidationError(
                     "Para un ingreso debes indicar la bodega destino."
                 )
+
         elif tipo in ["SALIDA", "DEVOLUCION"]:
             if not bodega_origen:
                 raise forms.ValidationError(
