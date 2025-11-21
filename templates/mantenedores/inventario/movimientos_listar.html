@@ -106,7 +106,7 @@
             </td>
             <td>{{ m.bodega_origen.nombre|default:"-" }}</td>
             <td>{{ m.bodega_destino.nombre|default:"-" }}</td>
-            <td>{{ m.cantidad }}</td>
+            <td>{{ m.cantidad|floatformat:0 }}</td>
             <td>{{ m.lote|default:"-" }}</td>
             <td>{{ m.serie|default:"-" }}</td>
             <td>{{ m.fecha_vencimiento|date:"d-m-Y"|default:"-" }}</td>
