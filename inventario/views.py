@@ -15,8 +15,6 @@ def movimientos_listar(request):
         "producto", "proveedor", "bodega_origen", "bodega_destino", "usuario"
     ).all()
 
-    # OJO: si en tu proyecto local ya corrigiste permisos_por_rol para recibir "user",
-    # aquí usa permisos_por_rol(request.user) en vez de request.user.rol
     permisos = permisos_por_rol(request.user)
 
     return render(request, "mantenedores/inventario/movimientos_listar.html", {
@@ -127,6 +125,8 @@ def exportar_movimientos_excel(request):
         "Lote",
         "Serie",
         "Fecha vencimiento",
+        "Documento referencia",   
+        "Motivo",                 
         "Observaciones",
         "Usuario",
     ]
@@ -145,6 +145,8 @@ def exportar_movimientos_excel(request):
             m.lote or "",
             m.serie or "",
             m.fecha_vencimiento.strftime("%d-%m-%Y") if m.fecha_vencimiento else "",
+            m.documento_referencia or "",
+            m.motivo or "",
             m.observaciones or "",
             m.usuario.username if getattr(m, "usuario", None) else "",
         ])

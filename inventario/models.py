@@ -37,6 +37,11 @@ class MovimientoInventario(models.Model):
     )
     fecha = models.DateTimeField(default=timezone.now, verbose_name="Fecha")
 
+    # Flags de control avanzado
+    manejo_lote = models.BooleanField(default=False)
+    manejo_serie = models.BooleanField(default=False)
+    manejo_vencimiento = models.BooleanField(default=False)
+
     producto = models.ForeignKey(
         Producto,
         on_delete=models.PROTECT,
@@ -100,6 +105,20 @@ class MovimientoInventario(models.Model):
         verbose_name="Observaciones"
     )
 
+    # 🔹 NUEVO: documento de referencia y motivo
+    doc_referencia = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name="Documento de referencia"
+    )
+    motivo = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+        verbose_name="Motivo (ajustes / devoluciones)"
+    )
+
     usuario = models.ForeignKey(
         Usuario,
         on_delete=models.PROTECT,
@@ -117,4 +136,4 @@ class MovimientoInventario(models.Model):
         db_table = "movimiento_inventario"
         verbose_name = "Movimiento de Inventario"
         verbose_name_plural = "Movimientos de Inventario"
-        ordering = ["-fecha"]     
+        ordering = ["-fecha"]

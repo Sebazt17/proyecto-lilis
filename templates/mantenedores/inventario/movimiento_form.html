@@ -1,160 +1,409 @@
 {% extends "mantenedores/paginaBase.html" %}
 {% load static %}
 
-{% block page_title %}
-{% if form.instance.pk %}
-Editar Movimiento de Inventario
-{% else %}
-Registrar Movimiento de Inventario
-{% endif %}
-{% endblock %}
-
 {% block titulo %}
-<h2 class="text-center fw-bold mt-4">
-    {% if form.instance.pk %}
-        Editar Movimiento de Inventario
-    {% else %}
-        Registrar Movimiento de Inventario
-    {% endif %}
-</h2>
-<p class="text-center text-secondary mb-4">
-    Completa la información requerida para gestionar el inventario.
-</p>
+<h2 class="fw-bold text-center mb-4">Registrar movimiento</h2>
 {% endblock titulo %}
 
 {% block contenido %}
 
-<div class="card mx-auto mb-4 shadow-lg" style="max-width: 1200px; border-radius: 22px;">
-    <form method="post" class="p-4 p-md-5">
-        {% csrf_token %}
+<style>
+    .wizard-card {
+        border-radius: 18px;
+        box-shadow: 0 10px 35px rgba(0,0,0,.08);
+        background: #ffffff;
+        padding: 24px 24px 18px;
+    }
 
-        {% if form.non_field_errors %}
-            <div class="alert alert-danger">
-                {{ form.non_field_errors }}
+    .wizard-steps {
+        display: flex;
+        gap: .5rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.25rem;
+    }
+
+    .wizard-step-btn {
+        flex: 1 1 0;
+        border-radius: 999px;
+        border: 1px solid #e5e5e5;
+        background: #f7f7f7;
+        color: #555;
+        font-weight: 600;
+        font-size: .9rem;
+        padding: .55rem .75rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all .2s ease;
+    }
+
+    .wizard-step-btn span {
+        font-weight: 700;
+        margin-right: .25rem;
+    }
+
+    .wizard-step-btn.active {
+        background: #b22222;
+        border-color: #b22222;
+        color: #fff;
+        box-shadow: 0 6px 15px rgba(178,34,34,.35);
+    }
+
+    .wizard-step-btn:hover:not(.active) {
+        background: #fff5f5;
+    }
+
+    .wizard-section {
+        display: none;
+        animation: fadeIn .18s ease-in-out;
+    }
+    .wizard-section.active {
+        display: block;
+    }
+
+    .form-hint {
+        font-size: .78rem;
+        color: #888;
+    }
+
+    .form-label {
+        font-weight: 600;
+        font-size: .88rem;
+        color: #333;
+    }
+
+    .form-control, .form-select {
+        border-radius: 10px;
+        font-size: .88rem;
+    }
+
+    .wizard-footer {
+        border-top: 1px solid #f1f1f1;
+        margin-top: 1.25rem;
+        padding-top: 1rem;
+    }
+
+    .btn-outline-secondary-lilis {
+        border-radius: 999px;
+        border-color: #b0b0b0;
+        color: #555;
+        padding-inline: 1.5rem;
+    }
+
+    .btn-outline-secondary-lilis:hover {
+        background-color: #f2f2f2;
+        color: #333;
+    }
+
+    .btn-danger-lilis {
+        border-radius: 999px;
+        background-color: #b22222;
+        border-color: #b22222;
+        padding-inline: 1.8rem;
+        font-weight: 600;
+    }
+
+    .btn-danger-lilis:hover {
+        background-color: #951a1a;
+        border-color: #951a1a;
+    }
+
+    .toggle-label {
+        font-size: .85rem;
+        margin-left: .35rem;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<div class="container-lg">
+  <div class="wizard-card">
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      {# errores generales #}
+      {% if form.non_field_errors %}
+      <div class="alert alert-danger mb-3">
+          {{ form.non_field_errors }}
+      </div>
+      {% endif %}
+
+      <!-- PASOS -->
+      <div class="wizard-steps">
+          <button type="button"
+                  class="wizard-step-btn active"
+                  data-step="1">
+              <span>1.</span> Datos del movimiento
+          </button>
+          <button type="button"
+                  class="wizard-step-btn"
+                  data-step="2">
+              <span>2.</span> Control avanzado
+          </button>
+          <button type="button"
+                  class="wizard-step-btn"
+                  data-step="3">
+              <span>3.</span> Referencias / Observaciones
+          </button>
+      </div>
+
+      <!-- SECCIÓN 1: DATOS DEL MOVIMIENTO -->
+      <div class="wizard-section active" id="wizard-step-1">
+          <div class="row g-3 mb-2">
+
+              <div class="col-md-4">
+                  <label class="form-label">Fecha</label>
+                  <input type="text"
+                         class="form-control"
+                         value="{% if form.instance.pk %}{{ form.instance.fecha|date:'d-m-Y H:i' }}{% else %}Se asignará al guardar{% endif %}"
+                         readonly>
+                  <div class="form-hint mt-1">
+                      La fecha de registro se genera automáticamente.
+                  </div>
+              </div>
+
+              <div class="col-md-4">
+                  <label class="form-label" for="{{ form.tipo.id_for_label }}">Tipo</label>
+                  {{ form.tipo }}
+                  {% if form.tipo.errors %}
+                    <div class="text-danger small">{{ form.tipo.errors.0 }}</div>
+                  {% endif %}
+              </div>
+
+              <div class="col-md-4">
+                  <label class="form-label" for="{{ form.cantidad.id_for_label }}">Cantidad</label>
+                  {{ form.cantidad }}
+                  <div class="form-hint">Solo cantidades enteras mayores a cero.</div>
+                  {% if form.cantidad.errors %}
+                    <div class="text-danger small">{{ form.cantidad.errors.0 }}</div>
+                  {% endif %}
+              </div>
+
+          </div>
+
+          <div class="row g-3">
+              <div class="col-md-4">
+                  <label class="form-label" for="{{ form.producto.id_for_label }}">Producto</label>
+                  {{ form.producto }}
+                  {% if form.producto.errors %}
+                    <div class="text-danger small">{{ form.producto.errors.0 }}</div>
+                  {% endif %}
+              </div>
+
+              <div class="col-md-4">
+                  <label class="form-label" for="{{ form.proveedor.id_for_label }}">Proveedor</label>
+                  {{ form.proveedor }}
+                  {% if form.proveedor.errors %}
+                    <div class="text-danger small">{{ form.proveedor.errors.0 }}</div>
+                  {% endif %}
+              </div>
+
+              <div class="col-md-4">
+                  <label class="form-label" for="{{ form.bodega_destino.id_for_label }}">Bodega destino</label>
+                  {{ form.bodega_destino }}
+                  {% if form.bodega_destino.errors %}
+                    <div class="text-danger small">{{ form.bodega_destino.errors.0 }}</div>
+                  {% endif %}
+              </div>
+
+              {# En caso de que uses también bodega_origen, lo dejamos oculto pero presente #}
+              <div class="col-12 mt-2">
+                  <details class="small">
+                      <summary class="mb-1">Opciones de bodega origen (para salidas / transferencias)</summary>
+                      <div class="row g-2">
+                          <div class="col-md-4">
+                              <label class="form-label" for="{{ form.bodega_origen.id_for_label }}">Bodega origen</label>
+                              {{ form.bodega_origen }}
+                              {% if form.bodega_origen.errors %}
+                                <div class="text-danger small">{{ form.bodega_origen.errors.0 }}</div>
+                              {% endif %}
+                          </div>
+                      </div>
+                  </details>
+              </div>
+          </div>
+      </div>
+
+    <!-- SECCIÓN 2: CONTROL AVANZADO -->
+        <div class="wizard-section" id="wizard-step-2">
+            <div class="row g-3 mb-3">
+
+                <div class="col-md-4">
+                    <div class="form-check">
+                        {{ form.manejo_lote }}
+                        <label class="form-check-label toggle-label" for="{{ form.manejo_lote.id_for_label }}">
+                            Manejo por lotes
+                        </label>
+                    </div>
+                    <div class="form-hint">Activa si quieres registrar lote específico.</div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="form-check">
+                        {{ form.manejo_serie }}
+                        <label class="form-check-label toggle-label" for="{{ form.manejo_serie.id_for_label }}">
+                            Manejo por serie
+                        </label>
+                    </div>
+                    <div class="form-hint">Útil para productos con número de serie.</div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="form-check">
+                        {{ form.manejo_vencimiento }}
+                        <label class="form-check-label toggle-label" for="{{ form.manejo_vencimiento.id_for_label }}">
+                            Perecible (vencimiento)
+                        </label>
+                    </div>
+                    <div class="form-hint">Activa si requiere fecha de vencimiento.</div>
+                </div>
             </div>
-        {% endif %}
 
-        <!-- ================= DATOS DEL MOVIMIENTO ================= -->
-        <h4 class="mb-3 fw-bold text-danger">Datos del Movimiento</h4>
-        <div class="row">
+          </div>
 
-            <div class="col-md-4 mb-3">
-                {{ form.tipo.label_tag }}
-                {{ form.tipo }}
-                {% for error in form.tipo.errors %}
-                    <p class="text-danger small fw-bold">{{ error }}</p>
-                {% endfor %}
+          <div class="row g-3">
+
+              <div class="col-md-4">
+                  <label class="form-label" for="{{ form.lote.id_for_label }}">Lote</label>
+                  {{ form.lote }}
+                  {% if form.lote.errors %}
+                    <div class="text-danger small">{{ form.lote.errors.0 }}</div>
+                  {% endif %}
+              </div>
+
+              <div class="col-md-4">
+                  <label class="form-label" for="{{ form.serie.id_for_label }}">Serie</label>
+                  {{ form.serie }}
+                  {% if form.serie.errors %}
+                    <div class="text-danger small">{{ form.serie.errors.0 }}</div>
+                  {% endif %}
+              </div>
+
+              <div class="col-md-4">
+                  <label class="form-label" for="{{ form.fecha_vencimiento.id_for_label }}">Fecha de vencimiento</label>
+                  {{ form.fecha_vencimiento }}
+                  <div class="form-hint">No se permiten fechas de vencimiento pasadas.</div>
+                  {% if form.fecha_vencimiento.errors %}
+                    <div class="text-danger small">{{ form.fecha_vencimiento.errors.0 }}</div>
+                  {% endif %}
+              </div>
+
+          </div>
+      </div>
+
+        <!-- SECCIÓN 3: REFERENCIAS / OBSERVACIONES -->
+        <div class="wizard-section" id="wizard-step-3">
+
+            <div class="row g-3 mb-3">
+
+                <div class="col-md-6">
+                    <label class="form-label" for="{{ form.doc_referencia.id_for_label }}">Documento de referencia</label>
+                    {{ form.doc_referencia }}
+                    <div class="form-hint">OC-123 / FAC-456 / GUIA-789 (opcional)</div>
+                    {% if form.doc_referencia.errors %}
+                        <div class="text-danger small">{{ form.doc_referencia.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" for="{{ form.motivo.id_for_label }}">Motivo (ajustes / devoluciones)</label>
+                    {{ form.motivo }}
+                    <div class="form-hint">Diferencia inventario, devolución cliente, daño, etc.</div>
+                    {% if form.motivo.errors %}
+                        <div class="text-danger small">{{ form.motivo.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
             </div>
 
-            <div class="col-md-4 mb-3">
-                {{ form.producto.label_tag }}
-                {{ form.producto }}
-                {% for error in form.producto.errors %}
-                    <p class="text-danger small fw-bold">{{ error }}</p>
-                {% endfor %}
-            </div>
-
-            <div class="col-md-4 mb-3">
-                {{ form.proveedor.label_tag }}
-                {{ form.proveedor }}
-                {% for error in form.proveedor.errors %}
-                    <p class="text-danger small fw-bold">{{ error }}</p>
-                {% endfor %}
-            </div>
-
-        </div>
-
-        <hr class="my-4">
-
-        <!-- ================= BODEGAS Y CANTIDAD ================= -->
-        <h4 class="mb-3 fw-bold text-danger">Bodegas y Cantidad</h4>
-        <div class="row">
-
-            <div class="col-md-5 mb-3">
-                {{ form.bodega_origen.label_tag }}
-                {{ form.bodega_origen }}
-                {% for error in form.bodega_origen.errors %}
-                    <p class="text-danger small fw-bold">{{ error }}</p>
-                {% endfor %}
-            </div>
-            
-            
-
-            <div class="col-md-5 mb-2">
-                {{ form.bodega_destino.label_tag }}
-                {{ form.bodega_destino }}
-                {% for error in form.bodega_destino.errors %}
-                    <p class="text-danger small fw-bold">{{ error }}</p>
-                {% endfor %}
-            </div>
-
-            <div class="col-md-4 mb-3">
-                {{ form.cantidad.label_tag }}
-                {{ form.cantidad }}
-                {% for error in form.cantidad.errors %}
-                    <p class="text-danger small fw-bold mb-0">{{ error }}</p>
-                {% endfor %}
-            </div>
-
-        </div>
-
-        <hr class="my-4">
-
-        <!-- ================= TRAZABILIDAD ================= -->
-        <h4 class="mb-3 fw-bold text-danger">Trazabilidad</h4>
-        <div class="row">
-
-            <div class="col-md-3 mb-3">
-                {{ form.lote.label_tag }}
-                {{ form.lote }}
-                {% for error in form.lote.errors %}
-                    <p class="text-danger small fw-bold">{{ error }}</p>
-                {% endfor %}
-            </div>
-
-            <div class="col-md-3 mb-3">
-                {{ form.serie.label_tag }}
-                {{ form.serie }}
-                {% for error in form.serie.errors %}
-                    <p class="text-danger small fw-bold">{{ error }}</p>
-                {% endfor %}
-            </div>
-
-            <div class="col-md-4 mb-3">
-                {{ form.fecha_vencimiento.label_tag }}
-                {{ form.fecha_vencimiento }}
-                {% for error in form.fecha_vencimiento.errors %}
-                    <p class="text-danger small fw-bold">{{ error }}</p>
-                {% endfor %}
-            </div>
-
-            <div class="col-12 mb-3">
-                {{ form.observaciones.label_tag }}
+            <div class="mb-3">
+                <label class="form-label" for="{{ form.observaciones.id_for_label }}">Observaciones</label>
                 {{ form.observaciones }}
-                {% for error in form.observaciones.errors %}
-                    <p class="text-danger small fw-bold">{{ error }}</p>
-                {% endfor %}
+                <div class="form-hint">
+                    Notas de operación, recepción, daño, comentarios extra.
+                </div>
+                {% if form.observaciones.errors %}
+                    <div class="text-danger small">{{ form.observaciones.errors.0 }}</div>
+                {% endif %}
             </div>
 
         </div>
 
-        <!-- ================= BOTONES ================= -->
-        <div class="d-flex justify-content-end mt-4 gap-2">
-            <a href="{% url 'inventario:movimientos_listar' %}"
-               class="btn btn-outline-secondary px-4">
-                Cancelar
-            </a>
 
-            <button type="submit" class="btn btn-danger px-4 fw-bold">
-                {% if form.instance.pk %}
-                    Guardar cambios
-                {% else %}
-                    Guardar Movimiento
-                {% endif %}
-            </button>
-        </div>
+
+      <!-- FOOTER -->
+      <div class="wizard-footer d-flex justify-content-between align-items-center">
+          <a href="{% url 'inventario:movimientos_listar' %}"
+             class="btn btn-outline-secondary-lilis">
+              Cancelar
+          </a>
+
+          <div class="d-flex gap-2">
+              <button type="reset" class="btn btn-outline-secondary-lilis">
+                  Limpiar
+              </button>
+              <button type="submit" class="btn btn-danger-lilis">
+                  Guardar movimiento
+              </button>
+          </div>
+      </div>
 
     </form>
+  </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // Tabs
+    const stepButtons = document.querySelectorAll(".wizard-step-btn");
+    const sections = document.querySelectorAll(".wizard-section");
+
+    stepButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const step = btn.dataset.step;
+
+            stepButtons.forEach(b => b.classList.toggle("active", b === btn));
+            sections.forEach(sec => {
+                sec.classList.toggle("active", sec.id === "wizard-step-" + step);
+            });
+        });
+    });
+
+    // Toggles (solo UX: habilitan / deshabilitan campos)
+    const chkLote   = document.getElementById("{{ form.manejo_lote.id_for_label }}");
+    const chkSerie  = document.getElementById("{{ form.manejo_serie.id_for_label }}");
+    const chkPere   = document.getElementById("{{ form.manejo_vencimiento.id_for_label }}");
+
+
+    const inputLote   = document.getElementById("{{ form.lote.id_for_label }}");
+    const inputSerie  = document.getElementById("{{ form.serie.id_for_label }}");
+    const inputFechaV = document.getElementById("{{ form.fecha_vencimiento.id_for_label }}");
+
+    function syncToggle(chk, input) {
+        if (!input) return;
+        const active = chk.checked;
+        input.readOnly = !active;
+        input.classList.toggle("bg-light", !active);
+        if (!active) input.value = "";
+    }
+
+    if (chkLote && inputLote) {
+        chkLote.addEventListener("change", () => syncToggle(chkLote, inputLote));
+        // estado inicial
+        syncToggle(chkLote, inputLote);
+    }
+    if (chkSerie && inputSerie) {
+        chkSerie.addEventListener("change", () => syncToggle(chkSerie, inputSerie));
+        syncToggle(chkSerie, inputSerie);
+    }
+    if (chkPere && inputFechaV) {
+        chkPere.addEventListener("change", () => syncToggle(chkPere, inputFechaV));
+        syncToggle(chkPere, inputFechaV);
+    }
+});
+</script>
 
 {% endblock contenido %}
