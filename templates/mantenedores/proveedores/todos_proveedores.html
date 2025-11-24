@@ -19,23 +19,25 @@
 
   <div class="card shadow-lg p-3 p-md-4" style="overflow:hidden;">
 
+    <!-- CONTROLES SUPERIORES -->
     <div class="row g-2 align-items-center mb-3">
 
+      <!-- BOTÓN AGREGAR -->
       <div class="col-12 col-md-3">
-
         {% if proveedores_crear %}
           <a href="{% url 'proveedores:agregar' %}" class="btn btn-danger fw-bold">+ Agregar Proveedor</a>
         {% else %}
           <button class="btn btn-secondary fw-bold w-100" disabled>Sin permiso para agregar</button>
         {% endif %}
-
       </div>
 
+      <!-- BUSCADOR -->
       <div class="col-12 col-md-3">
         <input type="text" id="buscador" class="form-control"
-              placeholder="🔎 Buscar proveedor / rut / correo / ciudad ">
+              placeholder="🔎 Buscar proveedor / rut / correo / ciudad / país / división">
       </div>
 
+      <!-- PAGE SIZE -->
       <div class="col-6 col-md-2">
         <select id="pageSize" class="form-select">
           <option value="5">5</option>
@@ -44,11 +46,14 @@
         </select>
       </div>
 
+      <!-- EXPORTAR -->
       <div class="col-6 col-md-1 ms-md-auto">
         <button id="excelExport" class="btn btn-success w-100 fw-bold">Excel</button>
       </div>
+
     </div>
 
+    <!-- TABLA -->
     <div class="table-responsive">
       <table id="tablaProveedores" class="table table-hover align-middle mb-0">
         <thead class="text-white" style="background-color:#B22222;">
@@ -59,16 +64,19 @@
             <th>Email</th>
             <th>Teléfono</th>
             <th>Ciudad</th>
-            <th>Región</th>
+            <th>País</th>
+            <th>División</th>
             <th>Estado</th>
             <th class="text-end" style="width:140px;">Acciones</th>
           </tr>
         </thead>
-        <tbody>
 
+        <tbody>
           {% for p in proveedores %}
-          <tr data-search="{{ p.razon_social }} {{ p.rut_nif }} {{ p.email }} {{ p.telefono }} {{ p.ciudad }} {{ p.region.nombre }}">
-            
+          <tr 
+            data-search="{{ p.razon_social }} {{ p.rut_nif }} {{ p.email }} {{ p.telefono }} {{ p.ciudad }} {{ p.pais.nombre }} {% if p.division %}{{ p.division.nombre }}{% endif %}"
+          >
+
             <td class="text-muted"></td>
 
             <td>{{ p.razon_social }}</td>
@@ -76,7 +84,16 @@
             <td class="text-nowrap">{{ p.email }}</td>
             <td>{{ p.telefono }}</td>
             <td>{{ p.ciudad }}</td>
-            <td>{{ p.region.nombre }}</td>
+
+            <td>{{ p.pais.nombre }}</td>
+
+            <td>
+              {% if p.division %}
+                {{ p.division.nombre }}
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
 
             <td>
               {% if p.estado == "ACTIVO" %}
@@ -86,15 +103,13 @@
               {% endif %}
             </td>
 
-            <!-- ACCIONES -->
             <td class="text-end text-nowrap">
 
-              {% if not proveedores_editar and not proveedores_eliminar %}
-                <span class="text-muted small">Sin permisos</span>
-              {% endif %}
-
               {% if proveedores_editar %}
-              <a href="{% url 'proveedores:editar' p.id %}" class="btn btn-warning btn-sm me-1">Editar</a>
+              <a href="{% url 'proveedores:editar' p.id %}"
+                 class="btn btn-warning btn-sm me-1">
+                 Editar
+              </a>
               {% endif %}
 
               {% if proveedores_eliminar %}
@@ -107,16 +122,15 @@
                 Eliminar
               </button>
               {% endif %}
-
             </td>
 
           </tr>
           {% endfor %}
-
         </tbody>
       </table>
     </div>
 
+    <!-- PAGINACIÓN -->
     <div class="d-flex justify-content-between align-items-center pt-3">
       <div class="small text-muted" id="pagerInfo"></div>
       <div class="btn-group">
@@ -128,29 +142,37 @@
   </div>
 </div>
 
-<!-- MODAL -->
-<div class="modal fade" id="confirmEliminarModal" tabindex="-1" aria-labelledby="labelEliminar" aria-hidden="true">
+
+<!-- MODAL ELIMINAR -->
+<div class="modal fade" id="confirmEliminarModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
+
       <form id="formEliminar" method="post">
         {% csrf_token %}
+
         <div class="modal-header">
           <h5 class="modal-title">Confirmar eliminación</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
+
         <div class="modal-body">
           ¿Eliminar proveedor <strong id="proveedorName"></strong>?
           <p class="text-danger mb-0"><strong>Esta acción es irreversible.</strong></p>
         </div>
+
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
           <button type="submit" class="btn btn-danger">Sí, eliminar</button>
         </div>
+
       </form>
     </div>
   </div>
 </div>
 
+
+<!-- SCRIPT DE FILTROS, PAGINACIÓN Y MODAL -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -161,8 +183,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const pagerInfo = document.getElementById("pagerInfo");
   const prevBtn = document.getElementById("prevPage");
   const nextBtn = document.getElementById("nextPage");
-  let page = 1;
 
+  let page = 1;
 
   function visibles() { return rows.filter(tr => tr.dataset.visible !== "0"); }
 
@@ -188,7 +210,6 @@ document.addEventListener("DOMContentLoaded", () => {
     nextBtn.disabled = page >= pages;
   }
 
-
   buscador.addEventListener("input", () => {
     const q = buscador.value.toLowerCase();
     rows.forEach(tr => {
@@ -204,7 +225,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   rows.forEach(tr => tr.dataset.visible = "1");
   pintarPagina();
-
 
   const modal = document.getElementById("confirmEliminarModal");
   modal.addEventListener("show.bs.modal", event => {

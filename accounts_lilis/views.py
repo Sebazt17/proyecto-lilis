@@ -6,9 +6,9 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import PasswordChangeView
 from django.urls import reverse_lazy
-# Aseguramos que los imports necesarios estén presentes
 from .permisos import role_required, permisos_por_rol 
-
+from django.utils import timezone
+from django.contrib.auth import logout
 
 from .models import Usuario
 from .forms import RegisterForm, UsuarioAdminForm, CustomSetPasswordForm
@@ -184,6 +184,11 @@ def login_personalizado(request):
 
             auth_login(request, user)
 
+            user.ultimo_acceso = timezone.now()
+            user.sesiones_activas = user.sesiones_activas + 1
+            user.save(update_fields=["ultimo_acceso", "sesiones_activas"])
+
+
             if user.requiere_cambio_password:
                 return redirect("accounts_lilis:cambiar_password_obligatorio")
 
@@ -231,6 +236,21 @@ class CambioPasswordObligatorioView(PasswordChangeView):
         messages.success(self.request, "✅ Contraseña actualizada correctamente.")
         return super().form_valid(form)
 
+
+
+
+@login_required
+def logout_personalizado(request):
+    user = request.user
+
+    if user.sesiones_activas > 0:
+        user.sesiones_activas -= 1
+        user.save(update_fields=["sesiones_activas"])
+
+    logout(request)
+
+    messages.success(request, "👋 Sesión cerrada correctamente.")
+    return redirect("accounts_lilis:login")
 
 
 def check_email(request):

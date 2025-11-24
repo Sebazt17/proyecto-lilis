@@ -83,18 +83,18 @@
             </div>
 
             <div class="col-md-4 mb-3">
-                {{ form.ciudad.label_tag }}
-                {{ form.ciudad }}
-            </div>
-
-            <div class="col-md-4 mb-3">
-                {{ form.region.label_tag }}
-                {{ form.region }}
-            </div>
-
-            <div class="col-md-4 mb-3">
                 {{ form.pais.label_tag }}
                 {{ form.pais }}
+            </div>
+
+            <div class="col-md-4 mb-3">
+                {{ form.division.label_tag }}
+                {{ form.division }}
+            </div>
+
+            <div class="col-md-4 mb-3">
+                {{ form.ciudad.label_tag }}
+                {{ form.ciudad }}
             </div>
 
             <div class="col-md-4 mb-3">
@@ -165,5 +165,64 @@
     </form>
 </div>
 {% endif %}
+
+<!-- JS: carga dinámica de divisiones por país -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const paisSelect = document.getElementById("id_pais");
+    const divisionSelect = document.getElementById("id_division");
+
+    if (!paisSelect || !divisionSelect) return;
+
+    function cargarDivisiones(paisId, selectedId) {
+        if (!paisId) {
+            divisionSelect.innerHTML = "<option value=''>Seleccione primero un país</option>";
+            return;
+        }
+
+        // URL Django con placeholder 0, reemplazamos por el id real
+        const url = "{% url 'proveedores:obtener_divisiones' 0 %}".replace("/0/", "/" + paisId + "/");
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                divisionSelect.innerHTML = "";
+                if (data.length === 0) {
+                    const opt = document.createElement("option");
+                    opt.value = "";
+                    opt.textContent = "Sin divisiones disponibles";
+                    divisionSelect.appendChild(opt);
+                    return;
+                }
+                data.forEach(function (div) {
+                    const opt = document.createElement("option");
+                    opt.value = div.id;
+                    opt.textContent = div.nombre;
+                    if (selectedId && String(selectedId) === String(div.id)) {
+                        opt.selected = true;
+                    }
+                    divisionSelect.appendChild(opt);
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                divisionSelect.innerHTML = "<option value=''>Error al cargar divisiones</option>";
+            });
+    }
+
+    // Al cambiar el país
+    paisSelect.addEventListener("change", function () {
+        cargarDivisiones(this.value, null);
+    });
+
+    // Si viene con país seleccionado (POST con errores)
+    const currentPais = paisSelect.value;
+    const currentDivision = divisionSelect.value;
+    if (currentPais) {
+        cargarDivisiones(currentPais, currentDivision || null);
+    }
+});
+</script>
 
 {% endblock contenido %}

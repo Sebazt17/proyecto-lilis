@@ -14,14 +14,15 @@
 <div class="text-center mt-3">
     <a href="{% url 'proveedores:listar' %}" class="btn btn-outline-danger fw-bold">Volver</a>
 </div>
+
 {% else %}
+
 <style>
 .card-form {
     background: white;         
     border-radius: 15px;
     padding: 25px;
 }
-
 
 .section-title {
     font-size: 1.2rem;
@@ -38,8 +39,12 @@
         <form method="POST" action="{% url 'proveedores:editar' proveedor.id %}">
             {% csrf_token %}
 
+            <!-- ============================
+                 IDENTIFICACIÓN LEGAL
+            ============================= -->
             <div class="section-title">Identificación Legal</div>
             <div class="row mb-3">
+
                 <div class="col-md-6">
                     {{ form.rut_nif.label_tag }} {{ form.rut_nif }}
                     <p class="text-danger small fw-bold">{{ form.rut_nif.errors }}</p>
@@ -56,8 +61,13 @@
                 </div>
             </div>
 
+
+            <!-- ============================
+                 CONTACTO & DIRECCIÓN
+            ============================= -->
             <div class="section-title">Contacto & Dirección</div>
             <div class="row mb-3">
+
                 <div class="col-md-6">
                     {{ form.email.label_tag }} {{ form.email }}
                     <p class="text-danger small fw-bold">{{ form.email.errors }}</p>
@@ -84,14 +94,18 @@
                 </div>
 
                 <div class="col-md-4">
-                    {{ form.region.label_tag }} {{ form.region }}
+                    {{ form.pais.label_tag }} {{ form.pais }}
                 </div>
 
                 <div class="col-md-4">
-                    {{ form.pais.label_tag }} {{ form.pais }}
+                    {{ form.division.label_tag }} {{ form.division }}
                 </div>
             </div>
 
+
+            <!-- ============================
+                 INFORMACIÓN COMERCIAL
+            ============================= -->
             <div class="section-title">Información Comercial</div>
             <div class="row mb-3">
 
@@ -128,7 +142,6 @@
                     {{ form.observaciones.label_tag }} {{ form.observaciones }}
                     <p class="text-danger small fw-bold">{{ form.observaciones.errors }}</p>
                 </div>
-
             </div>
 
             <div class="d-flex justify-content-center gap-3 mt-4">
@@ -141,5 +154,72 @@
 </div>
 
 {% endif %}
+
+
+<!-- ================
+     JS AJAX: País → Divisiones
+================ -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const paisSelect = document.getElementById("id_pais");
+    const divisionSelect = document.getElementById("id_division");
+
+    if (!paisSelect || !divisionSelect) return;
+
+    function cargarDivisiones(paisId, selectedId) {
+        if (!paisId) {
+            divisionSelect.innerHTML = "<option value=''>Seleccione primero un país</option>";
+            return;
+        }
+
+        const url = "{% url 'proveedores:obtener_divisiones' 0 %}".replace("/0/", "/" + paisId + "/");
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                divisionSelect.innerHTML = "";
+
+                if (data.length === 0) {
+                    const opt = document.createElement("option");
+                    opt.value = "";
+                    opt.textContent = "Sin divisiones disponibles";
+                    divisionSelect.appendChild(opt);
+                    return;
+                }
+
+                data.forEach(function (div) {
+                    const opt = document.createElement("option");
+                    opt.value = div.id;
+                    opt.textContent = div.nombre;
+
+                    // marcar seleccionada si estamos editando
+                    if (selectedId && String(selectedId) === String(div.id)) {
+                        opt.selected = true;
+                    }
+
+                    divisionSelect.appendChild(opt);
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                divisionSelect.innerHTML = "<option value=''>Error al cargar divisiones</option>";
+            });
+    }
+
+    // Al cambiar el país
+    paisSelect.addEventListener("change", function () {
+        cargarDivisiones(this.value, null);
+    });
+
+    // Caso EDITAR → cargar divisiones iniciales
+    const initialPais = paisSelect.value;
+    const initialDivision = divisionSelect.value;
+
+    if (initialPais) {
+        cargarDivisiones(initialPais, initialDivision || null);
+    }
+});
+</script>
 
 {% endblock contenido %}

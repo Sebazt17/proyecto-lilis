@@ -10,4 +10,10 @@ urlpatterns = [
     path("eliminar/<int:id>/", views.eliminar_proveedor, name="eliminar"),
 
     path("exportar/", views.exportar_proveedores_excel, name="exportar"),
+
+    path(
+        "divisiones/<int:pais_id>/",
+        views.obtener_divisiones,
+        name="obtener_divisiones"
+    ),
 ]

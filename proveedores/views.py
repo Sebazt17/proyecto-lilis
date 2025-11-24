@@ -2,26 +2,36 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse, HttpResponse
 from django.db.models import Q
-from .models import Proveedor
+
+from .models import Proveedor, Pais, DivisionAdministrativa
 from .forms import ProveedorForm
 from .permisos import permisos_proveedores_context
+from .choices import CONDICIONES_PAGO
 
-# -------- VALIDACIONES DE ACCESO -------- #
+
+# --------------------------
+# VALIDACIONES DE ACCESO
+# --------------------------
 
 def puede_entrar_modulo(user):
     return user.is_authenticated and user.rol in ["ADMIN", "OPER_COMPRAS", "AUDITOR"]
 
+
 def puede_crear(user):
     return user.is_authenticated and user.rol in ["ADMIN", "OPER_COMPRAS"]
 
+
 def puede_editar(user):
     return user.is_authenticated and user.rol in ["ADMIN", "OPER_COMPRAS"]
+
 
 def puede_eliminar(user):
     return user.is_authenticated and user.rol == "ADMIN"
 
 
-# -------- VISTAS -------- #
+# --------------------------
+# LISTAR PROVEEDORES
+# --------------------------
 
 @login_required
 @user_passes_test(puede_entrar_modulo)
@@ -45,6 +55,10 @@ def mostrar_todos_proveedores(request):
     return render(request, "mantenedores/proveedores/todos_proveedores.html", context)
 
 
+# --------------------------
+# CREAR PROVEEDOR
+# --------------------------
+
 @login_required
 @user_passes_test(puede_crear)
 def crear_proveedor(request):
@@ -63,6 +77,10 @@ def crear_proveedor(request):
         }
     )
 
+
+# --------------------------
+# EDITAR PROVEEDOR
+# --------------------------
 
 @login_required
 @user_passes_test(puede_editar)
@@ -85,6 +103,10 @@ def editar_proveedor(request, id):
     )
 
 
+# --------------------------
+# ELIMINAR PROVEEDOR
+# --------------------------
+
 @login_required
 @user_passes_test(puede_eliminar)
 def eliminar_proveedor(request, id):
@@ -97,10 +119,13 @@ def eliminar_proveedor(request, id):
     return redirect("proveedores:listar")
 
 
+# --------------------------
+# EXPORTAR A EXCEL
+# --------------------------
+
 @login_required
 @user_passes_test(puede_entrar_modulo)
 def exportar_proveedores_excel(request):
-    # Auditor puede exportar, no es "creación"
     q = request.GET.get("q", "").strip()
     qs = Proveedor.objects.all().order_by("razon_social")
 
@@ -120,8 +145,10 @@ def exportar_proveedores_excel(request):
 
     headers = [
         "RUT/NIF", "Razón Social", "Nombre Fantasía",
-        "Email", "Teléfono", "Ciudad", "Región",
-        "Dirección", "Sitio Web", "Moneda", "Condiciones Pago", "Estado"
+        "Email", "Teléfono", "Ciudad",
+        "País", "División",
+        "Dirección", "Sitio Web",
+        "Moneda", "Condiciones Pago", "Estado"
     ]
     ws.append(headers)
 
@@ -133,11 +160,12 @@ def exportar_proveedores_excel(request):
             p.email,
             (p.telefono or ""),
             (p.ciudad or ""),
-            (p.region.nombre if getattr(p, "region", None) else ""),
+            (p.pais.nombre if p.pais else ""),
+            (p.division.nombre if p.division else ""),
             (p.direccion or ""),
             (p.sitio_web or ""),
-            (p.moneda or ""),
-            (p.condiciones_pago or ""),
+            p.moneda,
+            dict(CONDICIONES_PAGO).get(p.condiciones_pago, p.condiciones_pago),
             p.get_estado_display() if hasattr(p, "get_estado_display") else p.estado,
         ])
 
@@ -146,5 +174,19 @@ def exportar_proveedores_excel(request):
         save_virtual_workbook(wb),
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-    respuesta["Content-Disposition"] = 'attachment; filename="proveedores.xlsx"'
+    respuesta["Content-Disposition"] = 'attachment; filename=\"proveedores.xlsx\"'
     return respuesta
+
+
+# --------------------------
+# AJAX: OBTENER DIVISIONES POR PAÍS
+# --------------------------
+
+@login_required
+@user_passes_test(puede_entrar_modulo)
+def obtener_divisiones(request, pais_id):
+    divisiones = DivisionAdministrativa.objects.filter(
+        pais_id=pais_id
+    ).order_by("nombre")
+    data = [{"id": d.id, "nombre": d.nombre} for d in divisiones]
+    return JsonResponse(data, safe=False)

@@ -1,7 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from .forms import CustomPasswordResetForm, CustomSetPasswordForm
-
+from .views import logout_personalizado
 from .views import (
     RegisterView,
     login_personalizado,
@@ -18,7 +18,8 @@ app_name = "accounts_lilis"
 urlpatterns = [
     path("register/", RegisterView.as_view(), name="register"),
     path("login/", login_personalizado, name="login"),
-    path("logout/", auth_views.LogoutView.as_view(), name="logout"),
+    path("logout/", logout_personalizado, name="logout"),
+
 
     path(
         "cambiar-password-obligatorio/",
