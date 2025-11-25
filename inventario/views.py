@@ -14,14 +14,10 @@ def movimientos_listar(request):
     movimientos = MovimientoInventario.objects.select_related(
         "producto", "proveedor", "bodega_origen", "bodega_destino", "usuario"
     ).all()
-
     permisos = permisos_por_rol(request.user)
-
     return render(request, "mantenedores/inventario/movimientos_listar.html", {
-        "movimientos": movimientos,
-        "permisos": permisos,
+        "movimientos": movimientos, "permisos": permisos,
     })
-
 
 @login_required
 @role_required("ADMIN", "OPER_INVENTARIO")
@@ -32,106 +28,81 @@ def movimiento_crear(request):
             movimiento = form.save(commit=False)
             movimiento.usuario = request.user
             movimiento.save()
+
+            # --- LOG AUDITORÍA ---
+            print(f"🚛 [AUDITORIA] Fecha: {timezone.now()} | Usuario: {request.user.username} | Acción: CREAR_MOVIMIENTO | ID: {movimiento.id} | Producto: {movimiento.producto.nombre} | Cant: {movimiento.cantidad}")
+            # ---------------------
+
             messages.success(request, "✅ Movimiento de inventario registrado correctamente.")
             return redirect("inventario:movimientos_listar")
         messages.error(request, "❌ Revisa los errores del formulario.")
     else:
         form = MovimientoInventarioForm()
-
     permisos = permisos_por_rol(request.user)
     return render(request, "mantenedores/inventario/movimiento_form.html", {
-        "form": form,
-        "permisos": permisos,
+        "form": form, "permisos": permisos,
     })
-
 
 @login_required
 @role_required("ADMIN", "OPER_INVENTARIO")
 def movimiento_editar(request, pk):
-    """
-    Editar un movimiento:
-    - Se pueden cambiar producto, proveedor, bodegas, tipo, cantidad, etc.
-    - La FECHA del movimiento NO se modifica.
-    """
     movimiento = get_object_or_404(MovimientoInventario, pk=pk)
-    fecha_original = movimiento.fecha  # la protegemos
-
+    fecha_original = movimiento.fecha  
     if request.method == "POST":
         form = MovimientoInventarioForm(request.POST, instance=movimiento)
         if form.is_valid():
             movimiento_editado = form.save(commit=False)
             movimiento_editado.fecha = fecha_original 
-
             movimiento_editado.save()
+
+            # --- LOG AUDITORÍA ---
+            print(f"📝 [AUDITORIA] Fecha: {timezone.now()} | Usuario: {request.user.username} | Acción: EDITAR_MOVIMIENTO | ID: {pk}")
+            # ---------------------
+
             messages.success(request, "✅ Movimiento de inventario actualizado correctamente.")
             return redirect("inventario:movimientos_listar")
         messages.error(request, "❌ Revisa los errores del formulario.")
     else:
         form = MovimientoInventarioForm(instance=movimiento)
-
     permisos = permisos_por_rol(request.user)
-    # reutilizamos el mismo form de creación (por ahora no lo tocamos)
     return render(request, "mantenedores/inventario/movimiento_form.html", {
-        "form": form,
-        "permisos": permisos,
+        "form": form, "permisos": permisos,
     })
-
 
 @login_required
 @role_required("ADMIN", "OPER_INVENTARIO")
 def movimiento_eliminar(request, pk):
-    """
-    Eliminar un movimiento de inventario.
-    Solo responde a POST (confirmación desde un formulario).
-    """
     movimiento = get_object_or_404(MovimientoInventario, pk=pk)
-
     if request.method == "POST":
+        
+        # --- LOG AUDITORÍA ---
+        print(f"❌ [AUDITORIA] Fecha: {timezone.now()} | Usuario: {request.user.username} | Acción: ELIMINAR_MOVIMIENTO | ID: {pk} | Tipo: {movimiento.tipo}")
+        # ---------------------
+
         movimiento.delete()
         messages.success(request, "✅ Movimiento de inventario eliminado correctamente.")
         return redirect("inventario:movimientos_listar")
-
     permisos = permisos_por_rol(request.user)
     return render(request, "mantenedores/inventario/movimiento_confirmar_eliminar.html", {
-        "movimiento": movimiento,
-        "permisos": permisos,
+        "movimiento": movimiento, "permisos": permisos,
     })
 
-
 def exportar_movimientos_excel(request):
-
     from .models import MovimientoInventario 
-
     movimientos = (
         MovimientoInventario.objects
         .select_related("producto", "proveedor", "bodega_origen", "bodega_destino", "usuario")
         .order_by("-fecha")
     )   
-
-
     wb = Workbook()
     ws = wb.active
     ws.title = "Movimientos"
-
     encabezados = [
-        "ID",
-        "Fecha registro",
-        "Tipo",
-        "Producto",
-        "Proveedor (RUT/NIF)",
-        "Bodega origen",
-        "Bodega destino",
-        "Cantidad",
-        "Lote",
-        "Serie",
-        "Fecha vencimiento",
-        "Documento referencia",   
-        "Motivo",                 
-        "Observaciones",
-        "Usuario",
+        "ID", "Fecha registro", "Tipo", "Producto", "Proveedor (RUT/NIF)",
+        "Bodega origen", "Bodega destino", "Cantidad", "Lote", "Serie",
+        "Fecha vencimiento", "Documento referencia", "Motivo", "Observaciones", "Usuario",
     ]
     ws.append(encabezados)
-
     for m in movimientos:
         ws.append([
             m.id,
@@ -145,12 +116,11 @@ def exportar_movimientos_excel(request):
             m.lote or "",
             m.serie or "",
             m.fecha_vencimiento.strftime("%d-%m-%Y") if m.fecha_vencimiento else "",
-            m.documento_referencia or "",
+            m.doc_referencia or "", # <-- Corregido para evitar error
             m.motivo or "",
             m.observaciones or "",
             m.usuario.username if getattr(m, "usuario", None) else "",
         ])
-
     response = HttpResponse(
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )

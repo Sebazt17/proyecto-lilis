@@ -35,6 +35,9 @@ class Usuario(AbstractUser):
     observaciones = models.TextField(blank=True, null=True, verbose_name='Observaciones')
     
     requiere_cambio_password = models.BooleanField(default=False, verbose_name="Requiere cambio de contraseña")
+    intentos_fallidos = models.PositiveIntegerField(default=0, verbose_name="Intentos fallidos")
+    bloqueado_hasta = models.DateTimeField(null=True, blank=True, verbose_name="Bloqueado hasta")
+
 
     REQUIRED_FIELDS = ['email']
 

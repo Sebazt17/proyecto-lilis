@@ -172,7 +172,6 @@
 </div>
 
 
-<!-- SCRIPT DE FILTROS, PAGINACIÓN Y MODAL -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -226,6 +225,66 @@ document.addEventListener("DOMContentLoaded", () => {
   rows.forEach(tr => tr.dataset.visible = "1");
   pintarPagina();
 
+  // --- EXPORTAR A EXCEL (CORREGIDO: ALINEACIÓN Y NÚMEROS) ---
+  document.getElementById("excelExport").addEventListener("click", () => {
+    
+    // 1. Clonar y limpiar el ENCABEZADO
+    const theadClone = document.querySelector("#tablaProveedores thead").cloneNode(true);
+    const headerRow = theadClone.querySelector("tr");
+    
+    // Eliminamos explícitamente la primera columna (#) y la última (Acciones)
+    if (headerRow.cells.length > 0) {
+        headerRow.deleteCell(0); // Borra el #
+        headerRow.deleteCell(-1); // Borra Acciones
+    }
+    const headHtml = theadClone.innerHTML;
+
+    // 2. Clonar y limpiar el CUERPO
+    const bodyVisible = visibles().map(tr => {
+      const c = tr.cloneNode(true);
+      c.querySelector("td").remove(); // Borra la columna #
+      c.lastElementChild.remove();    // Borra la columna Botones
+      return c.outerHTML;
+    }).join("");
+
+    // 3. Estilos: Agregué 'mso-number-format:"\@"' para que los teléfonos
+    // se vean como texto y no como notación científica (5.43E+11)
+    const html = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
+          th, td { 
+            border: 1px solid #000000; 
+            padding: 8px; 
+            vertical-align: middle; 
+            white-space: nowrap; 
+            mso-number-format:"\@"; 
+          }
+          th { background-color: #B22222; color: #ffffff; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <table>${headHtml}<tbody>${bodyVisible}</tbody></table>
+      </body>
+      </html>
+    `;
+    
+    const blob = new Blob(["\ufeff", html], {
+        type: "application/vnd.ms-excel;charset=utf-8"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "proveedores_lilis.xls";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  });
+  // -----------------------------------------------------------
+
   const modal = document.getElementById("confirmEliminarModal");
   modal.addEventListener("show.bs.modal", event => {
     const btn = event.relatedTarget;
@@ -234,5 +293,4 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 </script>
-
 {% endblock contenido %}

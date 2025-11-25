@@ -18,10 +18,9 @@
     border: 2px solid #ffeaea;
     animation: fadeSlide .6s ease-out;
 }
-@keyframes fadeSlide { from {opacity:0; transform: translateY(50px);} to{opacity:1; transform: translateY(0);} }
-
-input.is-invalid, select.is-invalid {
-    border: 2px solid #b22222 !important;
+@keyframes fadeSlide { 
+    from {opacity:0; transform: translateY(50px);} 
+    to{opacity:1; transform: translateY(0);} 
 }
 </style>
 
@@ -35,6 +34,7 @@ input.is-invalid, select.is-invalid {
         {% csrf_token %}
 
         <div class="row">
+
             <div class="col-md-6 mb-3">
                 {{ form.username.label_tag }}
                 {{ form.username }}
@@ -54,16 +54,25 @@ input.is-invalid, select.is-invalid {
             <div class="col-md-6 mb-3">
                 {{ form.first_name.label_tag }}
                 {{ form.first_name }}
+                {% if form.first_name.errors %}
+                    <p class="text-danger small fw-bold">{{ form.first_name.errors.0 }}</p>
+                {% endif %}
             </div>
 
             <div class="col-md-6 mb-3">
                 {{ form.last_name.label_tag }}
                 {{ form.last_name }}
+                {% if form.last_name.errors %}
+                    <p class="text-danger small fw-bold">{{ form.last_name.errors.0 }}</p>
+                {% endif %}
             </div>
 
             <div class="col-md-6 mb-3">
                 {{ form.telefono.label_tag }}
                 {{ form.telefono }}
+                {% if form.telefono.errors %}
+                    <p class="text-danger small fw-bold">{{ form.telefono.errors.0 }}</p>
+                {% endif %}
             </div>
 
             <div class="col-md-6 mb-3">
@@ -92,6 +101,7 @@ input.is-invalid, select.is-invalid {
             <button type="submit" class="btn btn-warning px-4 fw-bold">Guardar</button>
             <a href="{% url 'accounts_lilis:usuario_listar' %}" class="btn btn-outline-danger px-4 fw-bold">Volver</a>
         </div>
+
     </form>
 
 </div>
